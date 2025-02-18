@@ -1,0 +1,227 @@
+﻿@page "/"
+@inject ILogger<Home> Logger
+@inject IJSRuntime JS
+
+<PageTitle>Dragodinde Farm</PageTitle>
+
+<label for="selector-generation">Générations</label>
+@* <Select TValue="int"  @bind-SelectedValue="@testValue">
+    @foreach (var generation in generations)
+    {
+        <SelectItem 
+            class="p-1 mb-1"
+            value="@generation.Id">
+            @generation.Name
+        </SelectItem >
+    }
+</Select> *@()
+<InputSelect  @bind-Value="_testValue" @onclick="SelectionChanged">
+    @foreach (var generation in generations)
+    {
+            <option value="1">@generation.Name</option>  
+        }  
+    </InputSelect>  
+
+    <Slider @bind-Value="@_testValue" Min="0" Max="10" />
+
+<div>value : @testValue</div>
+
+
+@* <label for="selector-generation">Couleurs  = </label>
+<select TValue="int"id="selector-generation" @onchange="changeColor">
+    @foreach (var color in colors)
+    {
+        <option
+            class="p-1 mb-1"
+            value="@color.Id">
+            @color.Name
+        </option>
+    }
+</select> *@
+ 
+<div>Possiblitées :</div>
+
+<div id="do-list" style="display: flex;
+            flex-wrap: wrap;
+            gap: 10px;">
+  @foreach (var dragodindeoption in dragodindeoptionsToDisplay)
+    {
+        <div style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
+    }
+</div>
+
+
+@code {
+private async void SelectionChanged()
+    {
+            Console.WriteLine("test changzeeged : " + testValue);
+    }
+    int testValue = 0;
+    private int _testValue {
+        get {
+            return testValue;
+        }
+        set {
+            Console.WriteLine("test changed : " + testValue);
+            testValue = value;
+        }
+    }
+    Task OnSelectedValueChanged( int value )
+    {
+        selectedGeneration = value;
+        Console.WriteLine("test: " + selectedGeneration );
+
+        return Task.CompletedTask;
+    }
+
+    void testEvent(object test)
+    {
+        Console.WriteLine("ceci est un test");
+    }
+
+    private IList<Generation> generations;
+    int selectedGeneration = 0;
+    private IList<Color> colors;
+        private int selectedColor = 0;
+    private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
+    private IList<DragodindeOption> dragodindeoptionsToDisplay {
+        get {
+            Console.WriteLine("value changed - selectedGeneration : " + selectedGeneration);
+            return dragodindeoptions.Where(x => 
+                selectedGeneration == 0 || x.stage == selectedGeneration
+            ).ToList();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        generations = new List<Generation>() { new Generation() { Id = 0, Name = "Tous "} };
+        for (int i = 1; i < 11 ; i++) {
+            generations.Add(new Generation() { Id = i, Name = "Génération " + i} );
+        }
+
+        colors = new List<Color>() {
+            
+            new Color() { Id = 0, Name = "Tous "},
+            new Color() { Id = 1, Name ="Amande"},
+            new Color() { Id = 2, Name  ="Dorée"},
+            new Color() { Id = 3, Name  ="Ebène"},
+            new Color() { Id = 4, Name  ="Emeraude"},
+            new Color() { Id = 5, Name  ="Indigo"},
+			new Color() { Id = 6, Name  ="Ivoire"},
+            new Color() { Id = 7, Name  ="Orchidée"},
+            new Color() { Id = 8, Name  ="Pourpre"},
+			new Color() { Id = 9, Name  ="Prune"},
+			new Color() { Id = 10, Name  ="Rousse"},
+			new Color() { Id = 11, Name  ="Turquoise"}
+        };
+
+        dragodindeoptions.AddRange(new List<DragodindeOption>() {
+            new DragodindeOption  { title = "Rousse", abbr = "Ro", colorA = "ff8b00", colorB = "ff8b00", stage = 1, ls = 1},//0
+            new DragodindeOption  { title = "Amande", abbr = "Am", colorA = "ffebcd", colorB = "ffebcd", stage = 1, ls = 1},//1
+            new DragodindeOption  { title = "Dorée", abbr = "Do", colorA = "ffd700", colorB = "ffd700", stage = 1, ls = 0.2},//2
+            new DragodindeOption  { title = "Rousse-Amande", abbr = "Ro-Am", colorA = "ff8b00", colorB = "ff8b00", stage = 2, ls = 0.8},//3
+            new DragodindeOption  { title = "Rousse-Dorée", abbr = "Ro-Do", colorA = "ff8b00", colorB = "ff8b00", stage = 2, ls = 0.8},//4
+            new DragodindeOption  { title = "Amande-Dorée", abbr = "Am-Do", colorA = "ffebcd", colorB = "ffebcd", stage = 2, ls = 0.8},//5
+            new DragodindeOption  { title = "Indigo", abbr = "In", colorA = "4a0081", colorB = "4a0081", stage = 3, ls = 0.8},//6
+            new DragodindeOption  { title = "Ébène", abbr = "Eb", colorA = "130000", colorB = "130000", stage = 3, ls = 0.8},//7
+            new DragodindeOption  { title = "Rousse-Indigo", abbr = "Ro-In", colorA = "ff8b00", colorB = "ff8b00", stage = 4, ls = 0.8},//8
+            new DragodindeOption  { title = "Rousse-Ébène", abbr = "Ro-Eb", colorA = "ff8b00", colorB = "ff8b00", stage = 4, ls = 0.8},//9
+            new DragodindeOption  { title = "Amande-Indigo", abbr = "Am-In", colorA = "ffebcd", colorB = "ffebcd", stage = 4, ls = 0.8},//10
+            new DragodindeOption  { title = "Amande-Ébène", abbr = "Am-Eb", colorA = "ffebcd", colorB = "ffebcd", stage = 4, ls = 0.8},//11
+            new DragodindeOption  { title = "Dorée-Indigo", abbr = "Do-In", colorA = "ffd700", colorB = "ffd700", stage = 4, ls = 0.8},//12
+            new DragodindeOption  { title = "Dorée-Ébène", abbr = "Do-Eb", colorA = "ffd700", colorB = "ffd700", stage = 4, ls = 0.8},//13
+            new DragodindeOption  { title = "Indigo-Ébène", abbr = "In-Eb", colorA = "4a0081", colorB = "4a0081", stage = 4, ls = 0.8},//14
+            new DragodindeOption  { title = "Pourpre", abbr = "Po", colorA = "dc133b", colorB = "dc133b", stage = 5, ls = 0.6},//15
+            new DragodindeOption  { title = "Orchidée", abbr = "Or", colorA = "f200f2", colorB = "f200f2", stage = 5, ls = 0.6},//16
+            new DragodindeOption  { title = "Rousse-Pourpre", abbr = "Ro-Po", colorA = "ff8b00", colorB = "ff8b00", stage = 6, ls = 0.6},//17
+            new DragodindeOption  { title = "Rousse-Orchidée", abbr = "Ro-Or", colorA = "ff8b00", colorB = "ff8b00", stage = 6, ls = 0.6},//18
+            new DragodindeOption  { title = "Amande-Pourpre", abbr = "Am-Po", colorA = "ffebcd", colorB = "ffebcd", stage = 6, ls = 0.6},//19
+            new DragodindeOption  { title = "Amande-Orchidée", abbr = "Am-Or", colorA = "ffebcd", colorB = "ffebcd", stage = 6, ls = 0.6},//20
+            new DragodindeOption  { title = "Dorée-Pourpre", abbr = "Do-Po", colorA = "ffd700", colorB = "ffd700", stage = 6, ls = 0.6},//21
+            new DragodindeOption  { title = "Dorée-Orchidée", abbr = "Do-Or", colorA = "ffd700", colorB = "ffd700", stage = 6, ls = 0.6},//22
+            new DragodindeOption  { title = "Indigo-Pourpre", abbr = "In-Po", colorA = "4a0081", colorB = "4a0081", stage = 6, ls = 0.6},//23
+            new DragodindeOption  { title = "Indigo-Orchidée", abbr = "In-Or", colorA = "4a0081", colorB = "4a0081", stage = 6, ls = 0.6},//24
+            new DragodindeOption  { title = "Ébène-Pourpre", abbr = "Eb-Po", colorA = "130000", colorB = "130000", stage = 6, ls = 0.6},//25
+            new DragodindeOption  { title = "Ébène-Orchidée", abbr = "Eb-Or", colorA = "130000", colorB = "130000", stage = 6, ls = 0.6},//26
+            new DragodindeOption  { title = "Pourpre-Orchidée", abbr = "Po-Or", colorA = "dc133b", colorB = "dc133b", stage = 6, ls = 0.6},//27
+            new DragodindeOption  { title = "Ivoire", abbr = "Iv", colorA = "fffff0", colorB = "fffff0", stage = 7, ls = 0.6},//28
+            new DragodindeOption  { title = "Turquoise", abbr = "Tu", colorA = "3fe0d0", colorB = "3fe0d0", stage = 7, ls = 0.6},//29
+            new DragodindeOption  { title = "Rousse-Ivoire", abbr = "Ro-Iv", colorA = "ff8b00", colorB = "ff8b00", stage = 8, ls = 0.4},//30
+            new DragodindeOption  { title = "Rousse-Turquoise", abbr = "Ro-Tu", colorA = "ff8b00", colorB = "ff8b00", stage = 8, ls = 0.4},//31
+            new DragodindeOption  { title = "Amande-Ivoire", abbr = "Am-Iv", colorA = "ffebcd", colorB = "ffebcd", stage = 8, ls = 0.4},//32
+            new DragodindeOption  { title = "Amande-Turquoise", abbr = "Am-Tu", colorA = "ffebcd", colorB = "ffebcd", stage = 8, ls = 0.4},//33
+            new DragodindeOption  { title = "Dorée-Ivoire", abbr = "Do-Iv", colorA = "ffd700", colorB = "ffd700", stage = 8, ls = 0.4},//34
+            new DragodindeOption  { title = "Dorée-Turquoise", abbr = "Do-Tu", colorA = "ffd700", colorB = "ffd700", stage = 8, ls = 0.4},//35
+            new DragodindeOption  { title = "Indigo-Ivoire", abbr = "In-Iv", colorA = "4a0081", colorB = "4a0081", stage = 8, ls = 0.4},//36
+            new DragodindeOption  { title = "Indigo-Turquoise", abbr = "In-Tu", colorA = "4a0081", colorB = "4a0081", stage = 8, ls = 0.4},//37
+            new DragodindeOption  { title = "Ébène-Ivoire", abbr = "Eb-Iv", colorA = "130000", colorB = "130000", stage = 8, ls = 0.4},//38
+            new DragodindeOption  { title = "Ébène-Turquoise", abbr = "Eb-Tu", colorA = "130000", colorB = "130000", stage = 8, ls = 0.4},//39
+            new DragodindeOption  { title = "Pourpre-Ivoire", abbr = "Po-Iv", colorA = "dc133b", colorB = "dc133b", stage = 8, ls = 0.4},//40
+            new DragodindeOption  { title = "Pourpre-Turquoise", abbr = "Po-Tu", colorA = "dc133b", colorB = "dc133b", stage = 8, ls = 0.4},//41
+            new DragodindeOption  { title = "Orchidée-Ivoire", abbr = "Or-Iv", colorA = "f200f2", colorB = "f200f2", stage = 8, ls = 0.4},//42
+            new DragodindeOption  { title = "Orchidée-Turquoise", abbr = "Or-Tu", colorA = "f200f2", colorB = "f200f2", stage = 8, ls = 0.4},//43
+            new DragodindeOption  { title = "Ivoire-Turquoise", abbr = "Iv-Tu", colorA = "fffff0", colorB = "fffff0", stage = 8, ls = 0.4},//44
+            new DragodindeOption  { title = "Émeraude", abbr = "Em", colorA = "31cd31", colorB = "31cd31", stage = 9, ls = 0.4},//45
+            new DragodindeOption  { title = "Prune", abbr = "Pr", colorA = "dd9fdd", colorB = "dd9fdd", stage = 9, ls = 0.4},//46
+            new DragodindeOption  { title = "Rousse-Émeraude", abbr = "Ro-Em", colorA = "ff8b00", colorB = "ff8b00", stage = 10, ls = 0.2},//47
+            new DragodindeOption  { title = "Rousse-Prune", abbr = "Ro-Pr", colorA = "ff8b00", colorB = "ff8b00", stage = 10, ls = 0.2},//48
+            new DragodindeOption  { title = "Amande-Émeraude", abbr = "Am-Em", colorA = "ffebcd", colorB = "ffebcd", stage = 10, ls = 0.2},//49
+            new DragodindeOption  { title = "Amande-Prune", abbr = "Am-Pr", colorA = "ffebcd", colorB = "ffebcd", stage = 10, ls = 0.2},//50
+            new DragodindeOption  { title = "Dorée-Émeraude", abbr = "Do-Em", colorA = "ffd700", colorB = "ffd700", stage = 10, ls = 0.2},//51
+            new DragodindeOption  { title = "Dorée-Prune", abbr = "Do-Pr", colorA = "ffd700", colorB = "ffd700", stage = 10, ls = 0.2},//52
+            new DragodindeOption  { title = "Indigo-Émeraude", abbr = "In-Em", colorA = "4a0081", colorB = "4a0081", stage = 10, ls = 0.2},//53
+            new DragodindeOption  { title = "Indigo-Prune", abbr = "In-Pr", colorA = "4a0081", colorB = "4a0081", stage = 10, ls = 0.2},//54
+            new DragodindeOption  { title = "Ébène-Émeraude", abbr = "Eb-Em", colorA = "130000", colorB = "130000", stage = 10, ls = 0.2},//55
+            new DragodindeOption  { title = "Ébène-Prune", abbr = "Eb-Pr", colorA = "130000", colorB = "130000", stage = 10, ls = 0.2},//56
+            new DragodindeOption  { title = "Pourpre-Émeraude", abbr = "Po-Em", colorA = "dc133b", colorB = "dc133b", stage = 10, ls = 0.2},//57
+            new DragodindeOption  { title = "Pourpre-Prune", abbr = "Po-Pr", colorA = "dc133b", colorB = "dc133b", stage = 10, ls = 0.2},//58
+            new DragodindeOption  { title = "Orchidée-Émeraude", abbr = "Or-Em", colorA = "f200f2", colorB = "f200f2", stage = 10, ls = 0.2},//59
+            new DragodindeOption  { title = "Orchidée-Prune", abbr = "Or-Pr", colorA = "f200f2", colorB = "f200f2", stage = 10, ls = 0.2},//60
+            new DragodindeOption  { title = "Ivoire-Émeraude", abbr = "Iv-Em", colorA = "fffff0", colorB = "fffff0", stage = 10, ls = 0.2},//61
+            new DragodindeOption  { title = "Ivoire-Prune", abbr = "Iv-Pr", colorA = "fffff0", colorB = "fffff0", stage = 10, ls = 0.2},//62
+            new DragodindeOption  { title = "Turquoise-Émeraude", abbr = "Tu-Em", colorA = "3fe0d0", colorB = "3fe0d0", stage = 10, ls = 0.2},//63
+            new DragodindeOption  { title = "Turquoise-Prune", abbr = "Tu-Pr", colorA = "3fe0d0", colorB = "3fe0d0", stage = 10, ls = 0.2},//64
+            new DragodindeOption  { title = "Émeraude-Prune", abbr = "Em-Pr", colorA = "31cd31", colorB = "31cd31", stage = 10, ls = 0.2}//65
+        });
+
+        Console.WriteLine("init");
+    }
+
+    void LogToConsole(string message) {
+        JS.InvokeVoidAsync("logToConsole", message).GetAwaiter().GetResult();
+    }
+   private void OnChangeTest(ChangeEventArgs e)
+    {
+        Console.WriteLine("OnChangeTest appelé avec la valeur : " + e.Value.ToString());
+    }
+    public class Generation
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+    }
+
+
+    public class Color
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+    }
+
+    public class DragodindeOption
+    {
+        public string title { get; set; }
+
+        public string abbr { get; set; }
+
+        public string colorA { get; set; }
+
+        public string colorB { get; set; }
+
+        public int stage { get; set; }
+
+        public double ls { get; set; }
+    }
+}
