@@ -1,0 +1,728 @@
+﻿@page "/"
+@using MudBlazor
+@using System.Text
+@using System.Globalization
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Home</PageTitle>
+
+<input type="hidden" id="idInstanceForCallback" value="@idInstance" />
+
+<label for="selector-generation">Générations</label>
+<MudSelect @bind-Value="selectedGeneration">
+	@foreach (var gen in generations)
+	{
+		<MudSelectItem Value="gen.Id">@gen.Name</MudSelectItem>
+	}
+</MudSelect>
+
+<div>selected  = @selectedGeneration</div>
+
+
+<label for="selector-generation">Couleurs</label>
+<MudSelect @bind-Value="selectedColor">
+	@foreach (var color in colors)
+	{
+		<MudSelectItem Value="color.Id">@color.Name</MudSelectItem>
+	}
+</MudSelect>
+
+<div>selected : @selectedColor</div>(q)
+
+
+<div>Possiblitées :</div>
+
+<div id="do-list" style="display: flex;
+            flex-wrap: wrap;
+            gap: 10px;">
+	@foreach (var dragodindeoption in dragodindeoptionsToDisplay)
+	{
+		@* <div id="do-id-@dragodindeoption.title" onmousedown="copyAndEnableDrag('do-id-@dragodindeoption.title')" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div> *@
+		<div id="do-id-@dragodindeoption.title"
+		title="@dragodindeoption.title"
+		ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+		draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
+
+	}
+
+</div>
+
+<MudCheckBox @bind-Value="MotherPredisp" Label="Mère prédisposée"></MudCheckBox>
+<MudCheckBox @bind-Value="FatherPredisp" Label="Père prédisposé"></MudCheckBox>
+
+<div class="container">
+	<div class="level">
+		<div class="box" id="box1" drop-zone="true"></div><div class="box" id="box2" drop-zone="true"></div><div class="box" id="box3" drop-zone="true"></div><div class="box" id="box4" drop-zone="true"></div>
+		<div class="box" id="box5" drop-zone="true"></div><div class="box" id="box6" drop-zone="true"></div><div class="box" id="box7" drop-zone="true"></div><div class="box" id="box8" drop-zone="true"></div>
+		<div class="box" id="box9" drop-zone="true"></div><div class="box" id="box10" drop-zone="true"></div><div class="box" id="box11" drop-zone="true"></div><div class="box" id="box12" drop-zone="true"></div>
+		<div class="box" id="box13" drop-zone="true"></div><div class="box" id="box14" drop-zone="true"></div><div class="box" id="box15" drop-zone="true"></div><div class="box" id="box16" drop-zone="true"></div>
+	</div>
+	<div class="line" style="left: 6.25%;"></div>
+	<div class="line" style="left: 18.75%;"></div>
+	<div class="line" style="left: 31.25%;"></div>
+	<div class="line" style="left: 43.75%;"></div>
+	<div class="line" style="left: 56.25%;"></div>
+	<div class="line" style="left: 68.75%;"></div>
+	<div class="line" style="left: 81.25%;"></div>
+	<div class="line" style="left: 93.75%;"></div>
+	<div class="level">
+		<div class="box" id="box17" drop-zone="true"></div><div class="box" id="box18" drop-zone="true"></div><div class="box" id="box19" drop-zone="true"></div><div class="box" id="box20" drop-zone="true"></div>
+		<div class="box" id="box21" drop-zone="true"></div><div class="box" id="box22" drop-zone="true"></div><div class="box" id="box23" drop-zone="true"></div><div class="box" id="box24" drop-zone="true"></div>
+		<div class="vertical-line" style="left: 50%;"></div>
+	</div>
+	<div class="line" style="left: 25%;"></div>
+	<div class="line" style="left: 75%;"></div>
+	<div class="level">
+		<div class="box" id="box25" drop-zone="true"></div><div class="box" id="box26" drop-zone="true"></div><div class="box" id="box27" drop-zone="true"></div><div class="box" id="box28" drop-zone="true"></div>
+	</div>
+	<div class="line" style="left: 25%;"></div>
+	<div class="line" style="left: 75%;"></div>
+	<div class="level">
+		<div class="box" id="box29" drop-zone="true"></div><div class="box" id="box30" drop-zone="true"></div>
+	</div>
+	<div class="line" style="left: 50%;"></div>
+	<div class="level">
+		<div class="box" id="box31"></div>
+	</div>
+</div>
+
+<div>List of dragodindes selected : </div>
+
+
+@foreach (var c in cells)
+{
+	<p>@c.CellId : @c.dragodindeOption?.title</p>
+}
+
+
+@code {
+
+	delegate void DelegCallbackDrop(string treeCellId, string titleId, string treeCellIdToClean);
+
+	static List<(Guid, DelegCallbackDrop)> callbackDropSubscribers = new List<(Guid, DelegCallbackDrop)>();
+
+	[JSInvokable]
+	public static void CallbackDrop(string Guid, string treeCellId, string titleId, string treeCellIdToClean)
+	{
+		var cbToUse = callbackDropSubscribers.FirstOrDefault(x => x.Item1.ToString() == Guid);
+		if (cbToUse != default((Guid, DelegCallbackDrop)))
+			cbToUse.Item2(treeCellId, titleId, treeCellIdToClean);
+		else
+			Console.WriteLine("No callback found for guid : " + Guid);
+	}
+
+
+	public List<DragodindeTreeCell> cells = new List<DragodindeTreeCell>();
+	private bool MotherPredisp = false;
+	private bool FatherPredisp = false;
+	private Guid idInstance;
+	private IList<Generation> generations;
+	int selectedGeneration = 0;
+	private IList<Color> colors;
+	private int selectedColor = 0;
+	private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
+	private IList<DragodindeOption> dragodindeoptionsToDisplay
+	{
+		get
+		{
+			Console.WriteLine("value changed - selectedGeneration  = " + selectedGeneration);
+			return dragodindeoptions.Where(x =>
+				(selectedGeneration == 0 || x.stage == selectedGeneration)
+				&& (selectedColor == 0 || StringComparer.ContainsIgnoringAccents(x.title, colors.First(x => x.Id == selectedColor).Name))
+			).ToList();
+		}
+	}
+
+	public void Dispose()
+	{
+		if (callbackDropSubscribers.Any(x => x.Item1 == idInstance))
+			callbackDropSubscribers.Remove(callbackDropSubscribers.First(x => x.Item1 == idInstance));
+	}
+
+	protected override void OnInitialized()
+	{
+		idInstance = Guid.NewGuid();
+		callbackDropSubscribers.Add(new(idInstance, CallbackDropToSubscribe));
+
+		generations = new List<Generation>() { new Generation() { Id = 0, Name = "Tous " } };
+		for (int i = 1; i < 11; i++)
+		{
+			generations.Add(new Generation() { Id = i, Name = "Génération " + i });
+		}
+
+		colors = new List<Color>() {
+
+			new Color() { Id = 0, Name = "Tous "},
+			new Color() { Id = 1, Name ="Amande"},
+			new Color() { Id = 2, Name  ="Dorée"},
+			new Color() { Id = 3, Name  ="Ebène"},
+			new Color() { Id = 4, Name  ="Emeraude"},
+			new Color() { Id = 5, Name  ="Indigo"},
+			new Color() { Id = 6, Name  ="Ivoire"},
+			new Color() { Id = 7, Name  ="Orchidée"},
+			new Color() { Id = 8, Name  ="Pourpre"},
+			new Color() { Id = 9, Name  ="Prune"},
+			new Color() { Id = 10, Name  ="Rousse"},
+			new Color() { Id = 11, Name  ="Turquoise"}
+		};
+
+
+		Console.WriteLine("init dragodindeoptions");
+
+		dragodindeoptions.AddRange(
+			new List<DragodindeOption>() {
+			new DragodindeOption { Id = 1, title = "Rousse", abbr = "Ro", colorA = "ff8b00", colorB = "ff8b00", stage = 1, ls = 1 },
+			new DragodindeOption { Id = 2, title = "Amande", abbr = "Am", colorA = "ffebcd", colorB = "ffebcd", stage = 1, ls = 1 },
+			new DragodindeOption { Id = 3, title = "Dorée", abbr = "Do", colorA = "ffd700", colorB = "ffd700", stage = 1, ls = 0.2 },
+			new DragodindeOption { Id = 4, title = "Rousse-Amande", abbr = "Ro-Am", colorA = "ff8b00", colorB = "ffebcd", stage = 2, ls = 0.8 },
+			new DragodindeOption { Id = 5, title = "Rousse-Dorée", abbr = "Ro-Do", colorA = "ff8b00", colorB = "ffd700", stage = 2, ls = 0.8 },
+			new DragodindeOption { Id = 6, title = "Amande-Dorée", abbr = "Am-Do", colorA = "ffebcd", colorB = "ffd700", stage = 2, ls = 0.8 },
+			new DragodindeOption { Id = 7, title = "Indigo", abbr = "In", colorA = "4a0081", colorB = "4a0081", stage = 3, ls = 0.8 },
+			new DragodindeOption { Id = 8, title = "Ébène", abbr = "Eb", colorA = "130000", colorB = "130000", stage = 3, ls = 0.8 },
+			new DragodindeOption { Id = 9, title = "Rousse-Indigo", abbr = "Ro-In", colorA = "ff8b00", colorB = "4a0081", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 10, title = "Rousse-Ébène", abbr = "Ro-Eb", colorA = "ff8b00", colorB = "130000", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 11, title = "Amande-Indigo", abbr = "Am-In", colorA = "ffebcd", colorB = "4a0081", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 12, title = "Amande-Ébène", abbr = "Am-Eb", colorA = "ffebcd", colorB = "130000", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 13, title = "Dorée-Indigo", abbr = "Do-In", colorA = "ffd700", colorB = "4a0081", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 14, title = "Dorée-Ébène", abbr = "Do-Eb", colorA = "ffd700", colorB = "130000", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 15, title = "Indigo-Ébène", abbr = "In-Eb", colorA = "4a0081", colorB = "130000", stage = 4, ls = 0.8 },
+			new DragodindeOption { Id = 16, title = "Pourpre", abbr = "Po", colorA = "dc133b", colorB = "dc133b", stage = 5, ls = 0.6 },
+			new DragodindeOption { Id = 17, title = "Orchidée", abbr = "Or", colorA = "f200f2", colorB = "f200f2", stage = 5, ls = 0.6 },
+			new DragodindeOption { Id = 18, title = "Rousse-Pourpre", abbr = "Ro-Po", colorA = "ff8b00", colorB = "dc133b", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 19, title = "Rousse-Orchidée", abbr = "Ro-Or", colorA = "ff8b00", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 20, title = "Amande-Pourpre", abbr = "Am-Po", colorA = "ffebcd", colorB = "dc133b", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 21, title = "Amande-Orchidée", abbr = "Am-Or", colorA = "ffebcd", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 22, title = "Dorée-Pourpre", abbr = "Do-Po", colorA = "ffd700", colorB = "dc133b", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 23, title = "Dorée-Orchidée", abbr = "Do-Or", colorA = "ffd700", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 24, title = "Indigo-Pourpre", abbr = "In-Po", colorA = "4a0081", colorB = "dc133b", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 25, title = "Indigo-Orchidée", abbr = "In-Or", colorA = "4a0081", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 26, title = "Ébène-Pourpre", abbr = "Eb-Po", colorA = "130000", colorB = "dc133b", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 27, title = "Ébène-Orchidée", abbr = "Eb-Or", colorA = "130000", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 28, title = "Pourpre-Orchidée", abbr = "Po-Or", colorA = "dc133b", colorB = "f200f2", stage = 6, ls = 0.6 },
+			new DragodindeOption { Id = 29, title = "Ivoire", abbr = "Iv", colorA = "fffff0", colorB = "fffff0", stage = 7, ls = 0.6 },
+			new DragodindeOption { Id = 30, title = "Turquoise", abbr = "Tu", colorA = "3fe0d0", colorB = "3fe0d0", stage = 7, ls = 0.6 },
+			new DragodindeOption { Id = 31, title = "Rousse-Ivoire", abbr = "Ro-Iv", colorA = "ff8b00", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 32, title = "Rousse-Turquoise", abbr = "Ro-Tu", colorA = "ff8b00", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 33, title = "Amande-Ivoire", abbr = "Am-Iv", colorA = "ffebcd", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 34, title = "Amande-Turquoise", abbr = "Am-Tu", colorA = "ffebcd", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 35, title = "Dorée-Ivoire", abbr = "Do-Iv", colorA = "ffd700", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 36, title = "Dorée-Turquoise", abbr = "Do-Tu", colorA = "ffd700", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 37, title = "Indigo-Ivoire", abbr = "In-Iv", colorA = "4a0081", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 38, title = "Indigo-Turquoise", abbr = "In-Tu", colorA = "4a0081", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 39, title = "Ébène-Ivoire", abbr = "Eb-Iv", colorA = "130000", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 40, title = "Ébène-Turquoise", abbr = "Eb-Tu", colorA = "130000", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 41, title = "Pourpre-Ivoire", abbr = "Po-Iv", colorA = "dc133b", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 42, title = "Pourpre-Turquoise", abbr = "Po-Tu", colorA = "dc133b", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 43, title = "Orchidée-Ivoire", abbr = "Or-Iv", colorA = "f200f2", colorB = "fffff0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 44, title = "Orchidée-Turquoise", abbr = "Or-Tu", colorA = "f200f2", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 45, title = "Ivoire-Turquoise", abbr = "Iv-Tu", colorA = "fffff0", colorB = "3fe0d0", stage = 8, ls = 0.4 },
+			new DragodindeOption { Id = 46, title = "Émeraude", abbr = "Em", colorA = "31cd31", colorB = "31cd31", stage = 9, ls = 0.4 },
+			new DragodindeOption { Id = 47, title = "Prune", abbr = "Pr", colorA = "dd9fdd", colorB = "dd9fdd", stage = 9, ls = 0.4 },
+			new DragodindeOption { Id = 48, title = "Rousse-Émeraude", abbr = "Ro-Em", colorA = "ff8b00", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 49, title = "Rousse-Prune", abbr = "Ro-Pr", colorA = "ff8b00", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 50, title = "Amande-Émeraude", abbr = "Am-Em", colorA = "ffebcd", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 51, title = "Amande-Prune", abbr = "Am-Pr", colorA = "ffebcd", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 52, title = "Dorée-Émeraude", abbr = "Do-Em", colorA = "ffd700", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 53, title = "Dorée-Prune", abbr = "Do-Pr", colorA = "ffd700", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 54, title = "Indigo-Émeraude", abbr = "In-Em", colorA = "4a0081", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 55, title = "Indigo-Prune", abbr = "In-Pr", colorA = "4a0081", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 56, title = "Ébène-Émeraude", abbr = "Eb-Em", colorA = "130000", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 57, title = "Ébène-Prune", abbr = "Eb-Pr", colorA = "130000", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 58, title = "Pourpre-Émeraude", abbr = "Po-Em", colorA = "dc133b", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 59, title = "Pourpre-Prune", abbr = "Po-Pr", colorA = "dc133b", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 60, title = "Orchidée-Émeraude", abbr = "Or-Em", colorA = "f200f2", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 61, title = "Orchidée-Prune", abbr = "Or-Pr", colorA = "f200f2", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 62, title = "Ivoire-Émeraude", abbr = "Iv-Em", colorA = "fffff0", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 63, title = "Ivoire-Prune", abbr = "Iv-Pr", colorA = "fffff0", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 64, title = "Turquoise-Émeraude", abbr = "Tu-Em", colorA = "3fe0d0", colorB = "31cd31", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 65, title = "Turquoise-Prune", abbr = "Tu-Pr", colorA = "3fe0d0", colorB = "dd9fdd", stage = 10, ls = 0.2 },
+			new DragodindeOption { Id = 66, title = "Émeraude-Prune", abbr = "Em-Pr", colorA = "31cd31", colorB = "dd9fdd", stage = 10, ls = 0.2 }
+								}
+			);
+
+		Console.WriteLine("init");
+	}
+
+	private void OnChangeTest(ChangeEventArgs e)
+	{
+		Console.WriteLine("OnChangeTest appelé avec la valeur  = " + e.Value.ToString());
+	}
+	public class Generation
+	{
+		public int Id { get; set; }
+
+		public string Name { get; set; }
+	}
+
+
+	public class Color
+	{
+		public int Id { get; set; }
+
+		public string Name { get; set; }
+	}
+
+	public class DragodindeOption : ICloneable
+	{
+		public int Id { get; set; }
+		public string title { get; set; }
+
+		public string abbr { get; set; }
+
+		public string colorA { get; set; }
+
+		public string colorB { get; set; }
+
+		public int stage { get; set; }
+
+		public double ls { get; set; }
+		public int gsw { get; set; }
+
+
+
+		public string Selector { get; set; } = "zone1";
+
+		public object Clone()
+		{
+			// Crée une nouvelle instance de DragodindeOption
+			DragodindeOption clone = new DragodindeOption();
+
+			// Copie les valeurs des propriétés
+			clone.Id = this.Id;
+			clone.title = this.title;
+			clone.abbr = this.abbr;
+			clone.colorA = this.colorA;
+			clone.colorB = this.colorB;
+			clone.stage = this.stage;
+			clone.ls = this.ls;
+			clone.gsw = this.gsw;
+			clone.Selector = this.Selector;
+
+			return clone;
+		}
+	}
+
+	public class DragodindeTreeCell
+	{
+		public string CellId { get; set; }
+		public DragodindeOption dragodindeOption { get; set; }
+	}
+
+	public Dictionary<int, double> MateWith(DragodindeOption source, DragodindeOption turkey) // last implement
+	{
+		// Vérifier les paramètres
+		if (turkey == null || !(turkey is DragodindeOption))
+		{
+			throw new ArgumentException("Wrong parameter");
+		}
+
+		// Somme des poids de sélection génétique de chaque arbre généalogique
+		// 1) this/father
+		Dictionary<int, double> fatherWeights = new Dictionary<int, double>();
+		double fatherWeightsSum = 0;
+		foreach (var v in getParents(source))
+		{
+			if (!fatherWeights.ContainsKey(v.Id))
+			{
+				fatherWeights[v.Id] = 0;
+			}
+			fatherWeights[v.Id] += v.gsw;
+			fatherWeightsSum += v.gsw;
+		}
+
+		// 2) turkey/mother
+		Dictionary<int, double> motherWeights = new Dictionary<int, double>();
+		double motherWeightsSum = 0;
+		foreach (var v in getParents(turkey))
+		{
+			if (!motherWeights.ContainsKey(v.Id))
+			{
+				motherWeights[v.Id] = 0;
+			}
+			motherWeights[v.Id] += v.gsw;
+			motherWeightsSum += v.gsw;
+		}
+
+		Dictionary<int, double> births = new Dictionary<int, double>();
+
+		// Pour chaque sélection possible
+		foreach (var fatherSortWeight in fatherWeights)
+		{
+			foreach (var motherSortWeight in motherWeights)
+			{
+				// Calculer la probabilité de cette sélection
+				double p1 = fatherSortWeight.Value / fatherWeightsSum;
+				double p2 = motherSortWeight.Value / motherWeightsSum;
+				double p = p1 * p2;
+
+				// Déterminer les poids de combinaison génétique
+				double gcw1 = getGCW(fatherSortWeight.Key);
+				double gcw2 = getGCW(motherSortWeight.Key);
+				double gcwm = 0; // Poids de mélange
+
+				// Le mélange est-il possible ?
+				if (COMBINATIONS.ContainsKey(fatherSortWeight.Key) &&
+					COMBINATIONS[fatherSortWeight.Key].ContainsKey(motherSortWeight.Key))
+				{
+					int mix = COMBINATIONS[fatherSortWeight.Key][motherSortWeight.Key];
+					gcwm = getGCW(mix) / 2;
+				}
+
+				// Calculer et sauvegarder les probabilités résultantes
+				// Couleur 1
+				if (!births.ContainsKey(fatherSortWeight.Key))
+				{
+					births[fatherSortWeight.Key] = 0;
+				}
+				births[fatherSortWeight.Key] += p * gcw1 / (gcw1 + gcw2 + gcwm);
+
+				// Couleur 2
+				if (!births.ContainsKey(motherSortWeight.Key))
+				{
+					births[motherSortWeight.Key] = 0;
+				}
+				births[motherSortWeight.Key] += p * gcw2 / (gcw1 + gcw2 + gcwm);
+
+				// Mélange
+				if (gcwm > 0)
+				{
+					int mix = COMBINATIONS[fatherSortWeight.Key][motherSortWeight.Key];
+					if (!births.ContainsKey(mix))
+					{
+						births[mix] = 0;
+					}
+					births[mix] += p * gcwm / (gcw1 + gcw2 + gcwm);
+				}
+			}
+		}
+
+		// TODO : capacities
+
+		return births;
+	}
+
+	public List<DragodindeOption> getParents(DragodindeOption dro)
+	{
+		List<DragodindeOption> parentsFound = new List<DragodindeOption>();
+
+		var parents = getParent(dro);
+
+		if (parents.father != null){
+			parentsFound.Add(parents.father);
+			parentsFound.AddRange(getParents(parents.father));
+		}
+		if (parents.mother != null)
+		{
+			parentsFound.Add(parents.mother);
+			parentsFound.AddRange(getParents(parents.mother));
+		}
+
+		return parentsFound;
+	}
+
+	public (DragodindeOption father, DragodindeOption mother) getParent(DragodindeOption dro)
+	{
+		string CellId = cells.FirstOrDefault(x => x.dragodindeOption == dro)?.CellId;
+		if (String.IsNullOrWhiteSpace(CellId))
+			return (null, null);
+
+		int boxPos = int.Parse(CellId.Replace("box", ""));
+		if (boxPos < 17)
+			return (null, null);
+		switch (boxPos)
+		{
+			case 17:
+				return (getDroByCellPos(1), getDroByCellPos(1));
+			case 18:
+				return (getDroByCellPos(3), getDroByCellPos(4));
+			case 19:
+				return (getDroByCellPos(5), getDroByCellPos(6));
+			case 20:
+				return (getDroByCellPos(7), getDroByCellPos(8));
+			case 21:
+				return (getDroByCellPos(9), getDroByCellPos(10));
+			case 22:
+				return (getDroByCellPos(11), getDroByCellPos(12));
+			case 23:
+				return (getDroByCellPos(13), getDroByCellPos(14));
+			case 24:
+				return (getDroByCellPos(15), getDroByCellPos(16));
+			case 25:
+				return (getDroByCellPos(17), getDroByCellPos(18));
+			case 26:
+				return (getDroByCellPos(19), getDroByCellPos(20));
+			case 27:
+				return (getDroByCellPos(21), getDroByCellPos(22));
+			case 28:
+				return (getDroByCellPos(23), getDroByCellPos(24));
+			case 29:
+				return (getDroByCellPos(25), getDroByCellPos(26));
+			case 30:
+				return (getDroByCellPos(27), getDroByCellPos(28));
+			default:
+				return (null, null);
+		}
+	}
+
+	public DragodindeOption getDroByCellPos(int cellPos)
+	{
+		return cells.FirstOrDefault(x => x.CellId == "box" + cellPos)?.dragodindeOption ?? null;
+	}
+
+
+	public double getGCW(int sortId)
+	{
+		var dro = dragodindeoptions.FirstOrDefault(s => s.Id == sortId);
+		if (dro == null)
+			return 0;
+		return (100 * dro.ls) / (2 - dro.stage % 2);
+	}
+
+
+	public class DropItem
+	{
+		public string Name { get; init; }
+		public string Identifier { get; set; }
+	}
+
+	public static class StringComparer
+	{
+		public static bool CompareIgnoringAccents(string str1, string str2)
+		{
+			if (str1 == null || str2 == null)
+				return str1 == str2;
+
+			string normalizedStr1 = str1.Normalize(NormalizationForm.FormD);
+			string normalizedStr2 = str2.Normalize(NormalizationForm.FormD);
+
+			string withoutAccentsStr1 = RemoveAccents(normalizedStr1);
+			string withoutAccentsStr2 = RemoveAccents(normalizedStr2);
+
+			return string.Equals(withoutAccentsStr1, withoutAccentsStr2, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public static bool ContainsIgnoringAccents(string source, string toCheck)
+		{
+			if (source == null || toCheck == null)
+				return false;
+
+			string normalizedSource = source.Normalize(NormalizationForm.FormD);
+			string normalizedToCheck = toCheck.Normalize(NormalizationForm.FormD);
+
+			string withoutAccentsSource = RemoveAccents(normalizedSource);
+			string withoutAccentsToCheck = RemoveAccents(normalizedToCheck);
+
+			return withoutAccentsSource.IndexOf(withoutAccentsToCheck, StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
+
+		private static string RemoveAccents(string input)
+		{
+			var chars = input.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray();
+			return new string(chars);
+		}
+	}
+
+	private async Task CreateCopyOfDiv(string id)
+	{
+		await JSRuntime.InvokeVoidAsync("copyAndEnableDrag", "do-id-" + id);
+	}
+
+
+	[JSInvokable]
+	public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean)
+	{
+		Console.WriteLine("titleId : " + titleId);
+		titleId = titleId.Replace("clone-", "").Replace("do-id-", "");
+
+		Console.WriteLine("Fonction C# appelée depuis JavaScript !");
+		Console.WriteLine("treeCellId : " + treeCellId);
+		Console.WriteLine("titleId : " + titleId);
+		Console.WriteLine("treeCellIdToClean : " + treeCellIdToClean);
+
+		if (treeCellId == null)
+		{
+			Console.WriteLine("treecell null");
+			var dtcToRemove = cells.FirstOrDefault(x => x.dragodindeOption?.title == titleId);
+			if (dtcToRemove != null)
+				cells.Remove(dtcToRemove);
+		}
+		else
+		{
+			Console.WriteLine("treecell not null : " + titleId);
+			DragodindeOption dro = dragodindeoptions.FirstOrDefault(x => StringComparer.CompareIgnoringAccents(x.title, titleId))?.Clone() as DragodindeOption ?? null;
+
+			int cellPos = int.Parse(treeCellId.Replace("box", ""));
+			int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 9 : 10;
+			dro.gsw = gswScore;
+
+			Console.WriteLine("dro : " + dro?.title);
+			if (cells.Any(c => c.CellId == treeCellId))
+				cells.First(c => c.CellId == treeCellId).dragodindeOption = dragodindeoptions.First(x => StringComparer.CompareIgnoringAccents(x.title, titleId));
+			else
+				cells.Add(new DragodindeTreeCell() { CellId = treeCellId, dragodindeOption = dragodindeoptions.First(x => StringComparer.CompareIgnoringAccents(x.title, titleId)) });
+
+
+
+		}
+
+		if (!String.IsNullOrWhiteSpace(treeCellIdToClean))
+		{
+			var dtcToRemove = cells.FirstOrDefault(x => x.CellId == treeCellIdToClean);
+			if (dtcToRemove != null)
+				cells.Remove(dtcToRemove);
+		}
+
+		Console.WriteLine("Cells : " + cells.Count());
+
+		StateHasChanged();
+	}
+
+	public static Dictionary<int, Dictionary<int, int>> COMBINATIONS = new Dictionary<int, Dictionary<int, int>>
+	{
+		{ 0, new Dictionary<int, int> { { 1, 3 }, { 2, 4 }, { 6, 8 }, { 7, 9 }, { 15, 17 }, { 16, 18 }, { 28, 30 }, { 29, 31 }, { 45, 47 }, { 46, 48 } } },
+		{ 1, new Dictionary<int, int> { { 0, 3 }, { 2, 5 }, { 6, 10 }, { 7, 11 }, { 15, 19 }, { 16, 20 }, { 28, 32 }, { 29, 33 }, { 45, 49 }, { 46, 50 } } },
+		{ 2, new Dictionary<int, int> { { 0, 4 }, { 1, 5 }, { 6, 12 }, { 7, 13 }, { 15, 21 }, { 16, 22 }, { 28, 34 }, { 29, 35 }, { 45, 51 }, { 46, 52 } } },
+		{ 6, new Dictionary<int, int> { { 0, 8 }, { 1, 10 }, { 2, 12 }, { 7, 14 }, { 15, 23 }, { 16, 24 }, { 28, 36 }, { 29, 37 }, { 45, 53 }, { 46, 54 } } },
+		{ 7, new Dictionary<int, int> { { 0, 9 }, { 1, 11 }, { 2, 13 }, { 6, 14 }, { 15, 25 }, { 16, 26 }, { 28, 38 }, { 29, 39 }, { 45, 55 }, { 46, 56 } } },
+		{ 15, new Dictionary<int, int> { { 0, 17 }, { 1, 17 }, { 2, 21 }, { 6, 23 }, { 7, 25 }, { 16, 27 }, { 28, 40 }, { 29, 41 }, { 45, 57 }, { 46, 58 } } },
+		{ 16, new Dictionary<int, int> { { 0, 18 }, { 1, 20 }, { 2, 22 }, { 6, 24 }, { 7, 26 }, { 15, 27 }, { 28, 42 }, { 29, 43 }, { 45, 59 }, { 46, 60 } } },
+		{ 28, new Dictionary<int, int> { { 0, 30 }, { 1, 30 }, { 2, 34 }, { 6, 36 }, { 7, 38 }, { 15, 40 }, { 16, 42 }, { 29, 44 }, { 45, 61 }, { 46, 62 } } },
+		{ 29, new Dictionary<int, int> { { 0, 31 }, { 1, 31 }, { 2, 35 }, { 6, 37 }, { 7, 39 }, { 15, 41 }, { 16, 43 }, { 28, 44 }, { 45, 63 }, { 46, 64 } } },
+		{ 45, new Dictionary<int, int> { { 0, 47 }, { 1, 49 }, { 2, 51 }, { 6, 53 }, { 7, 55 }, { 15, 57 }, { 16, 59 }, { 28, 61 }, { 29, 63 }, { 46, 65 } } },
+		{ 46, new Dictionary<int, int> { { 0, 48 }, { 1, 50 }, { 2, 52 }, { 6, 54 }, { 7, 56 }, { 15, 58 }, { 16, 60 }, { 28, 62 }, { 29, 64 }, { 45, 65 } } },
+		{ 3, new Dictionary<int, int> { { 5, 6 }, { 14, 15 } } },
+		{ 4, new Dictionary<int, int> { { 5, 7 }, { 14, 16 } } },
+		{ 5, new Dictionary<int, int> { { 3, 6 }, { 4, 7 } } },
+		{ 14, new Dictionary<int, int> { { 3, 15 }, { 4, 16 } } },
+		{ 23, new Dictionary<int, int> { { 27, 28 } } },
+		{ 26, new Dictionary<int, int> { { 27, 29 } } },
+		{ 27, new Dictionary<int, int> { { 23, 28 }, { 26, 29 } } },
+		{ 40, new Dictionary<int, int> { { 44, 45 } } },
+		{ 43, new Dictionary<int, int> { { 44, 46 } } },
+		{ 44, new Dictionary<int, int> { { 40, 45 }, { 43, 46 } } }
+	};
+
+}
+
+
+<script>
+	function copyAndEnableDrag(divId) {
+		console.log("divId : " + divId);
+		var originalDiv = document.getElementById(divId);
+		var copiedDiv = originalDiv.cloneNode(true);
+		copiedDiv.id = "copiedDiv";
+		copiedDiv.style.position = "absolute";
+		copiedDiv.style.top = "200px"; // Ajuster la position initiale
+		copiedDiv.style.left = "200px";
+		copiedDiv.setAttribute("draggable", "true");
+		copiedDiv.ondragstart = function(event) {
+			event.dataTransfer.setData("text/plain", event.target.id);
+		};
+		document.body.appendChild(copiedDiv);
+	}
+
+	document.body.ondrop = function(event) {
+		var dropzone = event.target;
+		var id = event.dataTransfer.getData("text");
+		var idInstance = document.getElementById('idInstanceForCallback').value;
+		var idSourceToClean = "";
+		console.log(document.getElementById(id).parentElement);
+		if (dropzone.getAttribute("drop-zone") === "true")
+		{
+			event.preventDefault();
+			var originalDiv = document.getElementById(id);
+			var draggableElement = originalDiv.cloneNode(true);
+			dropzone.appendChild(draggableElement);
+			draggableElement.style.position = "relative";
+			draggableElement.style.top = "0px";
+			draggableElement.style.left = "0px";
+			draggableElement.setAttribute("id", "clone-" + id);
+			draggableElement.setAttribute("clone", "true");
+
+			if (document.getElementById(id).getAttribute("clone") === "true") {
+				idSourceToClean = document.getElementById(id).parentElement.id;
+				document.getElementById(id).remove();
+			}
+
+				console.log(event.target);
+				console.log('event.target.id : ' + event.target.id);
+				console.log('id : ' + id);
+			DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, event.target.id, id, idSourceToClean)
+			.then(datas => {
+				console.log('Fonction C# appelée avec succès');
+			}).catch(error => {
+				console.error("Erreur lors de l'appel de la fonction C#: ", error);
+			});
+		}
+		else if (document.getElementById(id).getAttribute("clone") === "true"){
+
+			console.log("remove drag");
+			document.getElementById(id).remove();
+
+
+			DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, null, id, idSourceToClean)
+			.then(datas => {
+				console.log('Fonction C# appelée avec succès');
+			}).catch(error => {
+				console.error("Erreur lors de l'appel de la fonction C#: ", error);
+			});
+		}
+		else {
+			console.log("not dropable");
+		}
+	};
+
+
+
+	document.body.ondragover = function(event) {
+		event.preventDefault();
+	};
+</script>
+
+
+
+
+
+<style>
+	.container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		max-width: 1200px;
+	}
+
+	.level {
+		display: flex;
+		justify-content: space-evenly;
+		margin: 20px 0;
+		width: 100%;
+		position: relative;
+	}
+
+	.box {
+		width: 54px;
+		height: 54px;
+		border: 2px solid darkolivegreen;
+		background-color: #E0F7FA;
+		text-align: center;
+		line-height: 60px;
+		font-family: Arial, sans-serif;
+		font-weight: bold;
+		color: #00BFFF;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.line {
+		position: absolute;
+		border-left: 2px solid #00BFFF;
+	}
+
+	.vertical-line {
+		height: 30px;
+		border-left: 2px solid #00BFFF;
+		position: absolute;
+		top: 0;
+	}
+</style>

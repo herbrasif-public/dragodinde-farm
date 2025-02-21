@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\skealios\\dragodinde-farm\\dragodinde-farm\\DragoDinde-MudBlazor\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.DragoDinde_MudBlazor.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.DragoDinde_MudBlazor.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.build.DragoDinde_MudBlazor.props",
+      "PackagePath": "build\\DragoDinde_MudBlazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildMultiTargeting.DragoDinde_MudBlazor.props",
+      "PackagePath": "buildMultiTargeting\\DragoDinde_MudBlazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildTransitive.DragoDinde_MudBlazor.props",
+      "PackagePath": "buildTransitive\\DragoDinde_MudBlazor.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
