@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\DragoDinde_MudBlazor.props" />
+</Project>

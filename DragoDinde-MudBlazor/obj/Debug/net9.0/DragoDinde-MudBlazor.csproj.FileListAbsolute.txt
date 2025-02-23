@@ -35,3 +35,9 @@ C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Debug
 C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Debug\net9.0\DragoDinde_MudBlazor.pdb
 C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Debug\net9.0\ref\DragoDinde_MudBlazor.dll
 C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\System.Data.SqlClient.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\runtimes\win-arm64\native\sni.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\runtimes\win-x64\native\sni.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\runtimes\win-x86\native\sni.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\runtimes\unix\lib\net8.0\System.Data.SqlClient.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\bin\Debug\net9.0\runtimes\win\lib\net8.0\System.Data.SqlClient.dll

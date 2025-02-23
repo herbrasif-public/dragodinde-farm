@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\DragoDinde_MudBlazor.props" />
+</Project>

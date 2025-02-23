@@ -1,8 +1,11 @@
 ﻿@page "/"
+@using DragoDinde_MudBlazor.Repositories
 @using MudBlazor
 @using System.Text
 @using System.Globalization
 @inject IJSRuntime JSRuntime
+@inject DragodindeRepository DragodindeRepository
+@inject UserRepository UserRepository
 @implements IDisposable
 
 <PageTitle>Home</PageTitle>
@@ -48,6 +51,22 @@
 
 </div>
 
+
+<div>Dragodindes sauvegardées :</div>
+
+<div>
+	@foreach (var dragodindeoption in dragodindesSaved)
+	{
+		<div style="display: inline-flex">
+			<p>@dragodindeoption.droName</p>
+			<div id="do-id-@dragodindeoption.droSaved.title"
+			title="@dragodindeoption.droSaved.title"
+			ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+			draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
+		</div>
+	}
+</div>
+
 <MudCheckBox @bind-Value="MotherPredisp" Label="Mère prédisposée"></MudCheckBox>
 <MudCheckBox @bind-Value="FatherPredisp" Label="Père prédisposé"></MudCheckBox>
 
@@ -82,18 +101,27 @@
 		<div class="box" id="box29" drop-zone="true"></div><div class="box" id="box30" drop-zone="true"></div>
 	</div>
 	<div class="line" style="left: 50%;"></div>
-	<div class="level">
+	<div class="level" style="display: none;">
 		<div class="box" id="box31"></div>
 	</div>
 </div>
 
-<div>List of dragodindes selected : </div>
+<h2>Sauvegarder des parents : </h2>
+
+<MudTextField @bind-Value="DradoDindeToSave" Label="Nom de la dragodinde au sauvegarder" Variant="Variant.Text"></MudTextField>
+<MudButton Variant="Variant.Filled" Onclick="() => saveParent(false)">Sauvegarder la mère</MudButton>
+<MudButton Variant="Variant.Filled" OnClick="() => saveParent(true)">Sauvegarder le père</MudButton>
+
+<p>@saveError</p>
+
+<div>List of possibilities : </div>
 
 
-@foreach (var c in cells)
+@foreach (var mp in MatchesPossibilities)
 {
-	<p>@c.CellId : @c.dragodindeOption?.title</p>
+	<p>@mp.Item1.title : @mp.Item2.ToString("P2")</p>
 }
+
 
 
 @code {
@@ -112,7 +140,10 @@
 			Console.WriteLine("No callback found for guid : " + Guid);
 	}
 
-
+	private string saveError = "";
+	private List<(string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string droName, DragodindeOption droSaved)>();
+	private string DradoDindeToSave = "";
+	public List<(DragodindeOption, double)> MatchesPossibilities = new List<(DragodindeOption, double)>();
 	public List<DragodindeTreeCell> cells = new List<DragodindeTreeCell>();
 	private bool MotherPredisp = false;
 	private bool FatherPredisp = false;
@@ -132,6 +163,76 @@
 				&& (selectedColor == 0 || StringComparer.ContainsIgnoringAccents(x.title, colors.First(x => x.Id == selectedColor).Name))
 			).ToList();
 		}
+	}
+
+	public void saveParent(bool isMother) {
+
+		Console.WriteLine("startToSave");
+		if (String.IsNullOrWhiteSpace(DradoDindeToSave)) {
+			saveError = "Pas de nom de dragodinde indiqué";
+			return;
+		}
+
+		Console.WriteLine("search for dro");
+		var posTarget = !isMother ? 29 : 30;
+
+		var dro = getDroByCellPos(posTarget).Clone() as DragodindeOption;
+
+		if (dro == null)
+		{
+			saveError = "Pas de dragodinde trouvé dans l'arbre";
+			return;
+		}
+
+		Console.WriteLine("fill parents of dro");
+
+		dro = FillParentsSaved(dro, posTarget);
+
+		dragodindesSaved.Add(new(DradoDindeToSave, dro));
+		saveError = "Dragodinde sauvegardée";
+
+		string geneticCode = GenerateGeneticCode(dro);
+
+		if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser))
+		{
+			DragodindeRepository.SaveDradoginde(DradoDindeToSave, geneticCode, UserRepository.CurrentUser);
+		}
+
+		Console.WriteLine("dro saved");
+	}
+
+
+	public string GenerateGeneticCode(DragodindeOption dro, string posTree = "")
+	{
+		string result = "";
+		if (dro == null)
+			return result;
+		result = posTree + dro.Id.ToString();
+		if (dro.FatherSaved != default(DragodindeOption))
+			result += GenerateGeneticCode(dro.FatherSaved, posTree + "P");
+		if (dro.MotherSaved != default(DragodindeOption))
+			result += GenerateGeneticCode(dro.MotherSaved, posTree + "M");
+		return result;
+	}
+
+	public DragodindeOption FillParentsSaved(DragodindeOption dro, int? cellPos)
+	{
+		if (dro == null || cellPos == null)
+			return null;
+
+		dro = dro.Clone() as DragodindeOption;
+
+		var parentsPos = getParentPos(cellPos.Value);
+		var parents = getParent(cellPos.Value);
+
+		if (parents.father != null) {
+			dro.FatherSaved = FillParentsSaved(parents.father, parentsPos.boxPosFather);
+		}
+		if (parents.mother != null) {
+			dro.MotherSaved = FillParentsSaved(parents.mother, parentsPos.boxPosMother);
+		}
+
+		return dro;
 	}
 
 	public void Dispose()
@@ -298,9 +399,14 @@
 			clone.ls = this.ls;
 			clone.gsw = this.gsw;
 			clone.Selector = this.Selector;
+			clone.MotherSaved = this.MotherSaved;
+			clone.FatherSaved = this.FatherSaved;
 
 			return clone;
 		}
+
+		public DragodindeOption MotherSaved { get; set; }
+		public DragodindeOption FatherSaved { get; set; }
 	}
 
 	public class DragodindeTreeCell
@@ -311,17 +417,27 @@
 
 	public Dictionary<int, double> MateWith(DragodindeOption source, DragodindeOption turkey) // last implement
 	{
+
+		Console.WriteLine("MateWith - start : " + source.Id + " | " + turkey.Id);
+
 		// Vérifier les paramètres
 		if (turkey == null || !(turkey is DragodindeOption))
 		{
 			throw new ArgumentException("Wrong parameter");
 		}
 
+		Console.WriteLine("MateWith - sum father ");
+
 		// Somme des poids de sélection génétique de chaque arbre généalogique
 		// 1) this/father
 		Dictionary<int, double> fatherWeights = new Dictionary<int, double>();
 		double fatherWeightsSum = 0;
-		foreach (var v in getParents(source))
+		List<DragodindeOption> fathertree = new List<DragodindeOption>() { turkey };
+		fathertree.AddRange(getParents(turkey));
+
+		Console.WriteLine("MateWith - father tree : " + fathertree.Count());
+
+		foreach (var v in fathertree)
 		{
 			if (!fatherWeights.ContainsKey(v.Id))
 			{
@@ -329,12 +445,18 @@
 			}
 			fatherWeights[v.Id] += v.gsw;
 			fatherWeightsSum += v.gsw;
+			Console.WriteLine("MateWith - fathertree - gsw : " + v.gsw);
 		}
+		Console.WriteLine("MateWith - sum father fatherWeights : " + fatherWeights.Count());
+		Console.WriteLine("MateWith - sum father end : " + fatherWeightsSum);
 
+		Console.WriteLine("MateWith - sum mother ");
 		// 2) turkey/mother
 		Dictionary<int, double> motherWeights = new Dictionary<int, double>();
 		double motherWeightsSum = 0;
-		foreach (var v in getParents(turkey))
+		List<DragodindeOption> mothertree = new List<DragodindeOption>() { source };
+		mothertree.AddRange(getParents(source));
+		foreach (var v in mothertree)
 		{
 			if (!motherWeights.ContainsKey(v.Id))
 			{
@@ -343,9 +465,13 @@
 			motherWeights[v.Id] += v.gsw;
 			motherWeightsSum += v.gsw;
 		}
+		Console.WriteLine("MateWith - sum mother end : " + motherWeightsSum);
 
 		Dictionary<int, double> births = new Dictionary<int, double>();
 
+
+
+		Console.WriteLine("MateWith - proba birth ");
 		// Pour chaque sélection possible
 		foreach (var fatherSortWeight in fatherWeights)
 		{
@@ -396,10 +522,74 @@
 				}
 			}
 		}
+		Console.WriteLine("MateWith - end proba birth ");
 
-		// TODO : capacities
 
 		return births;
+	}
+
+	public void UpdateProbabilities()
+	{
+		Console.WriteLine("Start proba");
+		MatchesPossibilities.Clear();
+
+		var parents = getParent(31);
+
+
+		Console.WriteLine("Start proba - parents count : " + parents);
+
+		Console.WriteLine("Start proba - get parent");
+		// Check if the father and mother are set
+		if (parents.father == null || parents.mother == null)
+		{
+			Console.WriteLine("Children not set.");
+			return;
+		}
+
+		Console.WriteLine("Start proba - father tree");
+		List<DragodindeOption> fatherTree = new List<DragodindeOption>();
+		fatherTree.Add(parents.father);
+		fatherTree.AddRange(getParents(parents.father));
+
+		// Get the father tree
+		foreach (var el in fatherTree)
+		{
+			if (dragodindeoptions.Any(dro => dro.Id == el.Id))
+			{
+				var gsw = el.gsw;
+				if (gsw == 10 && FatherPredisp)
+					el.gsw = 20;
+			}
+		}
+
+		Console.WriteLine("Start proba - mother tree");
+		// Get the mother tree
+		List<DragodindeOption> motherTree = new List<DragodindeOption>();
+		motherTree.Add(parents.mother);
+		motherTree.AddRange(getParents(parents.mother));
+
+		foreach (var el in motherTree)
+		{
+			if (dragodindeoptions.Any(dro => dro.Id == el.Id))
+			{
+				var gsw = el.gsw;
+				if (gsw == 10 && MotherPredisp)
+					el.gsw = 20;
+			}
+		}
+
+
+		Console.WriteLine("Start proba - mate");
+		// Mate the parents & display the result
+		var children = MateWith(parents.father, parents.mother);
+
+
+		Console.WriteLine("Start proba - children : " + children.Count());
+		foreach (var child in children.OrderByDescending(c => c.Value).ToList())
+		{
+			MatchesPossibilities.Add(new(dragodindeoptions.FirstOrDefault(x => x.Id == child.Key), child.Value));
+		}
+		Console.WriteLine("Start proba - end");
 	}
 
 	public List<DragodindeOption> getParents(DragodindeOption dro)
@@ -426,8 +616,12 @@
 		string CellId = cells.FirstOrDefault(x => x.dragodindeOption == dro)?.CellId;
 		if (String.IsNullOrWhiteSpace(CellId))
 			return (null, null);
-
 		int boxPos = int.Parse(CellId.Replace("box", ""));
+		return getParent(boxPos);
+	}
+
+	public (DragodindeOption father, DragodindeOption mother) getParent(int boxPos)
+	{
 		if (boxPos < 17)
 			return (null, null);
 		switch (boxPos)
@@ -460,6 +654,49 @@
 				return (getDroByCellPos(25), getDroByCellPos(26));
 			case 30:
 				return (getDroByCellPos(27), getDroByCellPos(28));
+			case 31:
+				return (getDroByCellPos(29), getDroByCellPos(30));
+			default:
+				return (null, null);
+		}
+	}
+	
+	public (int? boxPosFather, int? boxPosMother) getParentPos(int boxPos)
+	{
+		if (boxPos < 17)
+			return (null, null);
+		switch (boxPos)
+		{
+			case 17:
+				return (1, 1);
+			case 18:
+				return (3, 4);
+			case 19:
+				return (5, 6);
+			case 20:
+				return (7, 8);
+			case 21:
+				return (9, 10);
+			case 22:
+				return (11, 12);
+			case 23:
+				return (13, 14);
+			case 24:
+				return (15, 16);
+			case 25:
+				return (17, 18);
+			case 26:
+				return (19, 20);
+			case 27:
+				return (21, 22);
+			case 28:
+				return (23, 24);
+			case 29:
+				return (25, 26);
+			case 30:
+				return (27, 28);
+			case 31:
+				return (29, 30);
 			default:
 				return (null, null);
 		}
@@ -467,7 +704,11 @@
 
 	public DragodindeOption getDroByCellPos(int cellPos)
 	{
-		return cells.FirstOrDefault(x => x.CellId == "box" + cellPos)?.dragodindeOption ?? null;
+		var result = cells.FirstOrDefault(x => x.CellId == "box" + cellPos)?.dragodindeOption ?? null;
+		int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 6 : 10;
+		if (result != null)
+			result.gsw = gswScore;
+		return result;
 	}
 
 
@@ -575,7 +816,7 @@
 		}
 
 		Console.WriteLine("Cells : " + cells.Count());
-
+		UpdateProbabilities();
 		StateHasChanged();
 	}
 

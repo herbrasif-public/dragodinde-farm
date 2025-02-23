@@ -1,0 +1,8 @@
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\DragoDinde_MudBlazor.exe
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\appsettings.Development.json
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\appsettings.json
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\DragoDinde_MudBlazor.dll
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\DragoDinde_MudBlazor.deps.json
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\DragoDinde_MudBlazor.runtimeconfig.json
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\DragoDinde_MudBlazor.pdb
+C:\Users\skealios\dragodinde-farm\dragodinde-farm\DragoDinde-MudBlazor\obj\Release\net9.0\PubTmp\Out\MudBlazor.dll

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DragoDinde_MudBlazor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+440dba63a1a1b8fa3752b11d72940430890083d9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ba0ca020b75129fd6211ec704f43f008c233e84a")]
 [assembly: System.Reflection.AssemblyProductAttribute("DragoDinde_MudBlazor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DragoDinde_MudBlazor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
