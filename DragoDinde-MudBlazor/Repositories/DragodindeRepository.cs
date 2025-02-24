@@ -9,9 +9,9 @@ namespace DragoDinde_MudBlazor.Repositories
     {
         private readonly string _connectionString;
 
-        public DragodindeRepository(string connectionString)
+        public DragodindeRepository()
         {
-            _connectionString = connectionString;
+            _connectionString = Environment.GetEnvironmentVariable("ConnectionString");
         }
 
         public void SaveDradoginde(string name, string geneticCode, string username)
@@ -31,6 +31,7 @@ END", connection);
                 command.ExecuteNonQuery();
             }
         }
+        
     }
 
 }

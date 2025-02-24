@@ -1,11 +1,16 @@
 ﻿@page "/"
 @using DragoDinde_MudBlazor.Repositories
+@using DragoDinde_MudBlazor.Models
+@using DragoDinde_MudBlazor.Business
 @using MudBlazor
 @using System.Text
-@using System.Globalization
 @inject IJSRuntime JSRuntime
 @inject DragodindeRepository DragodindeRepository
 @inject UserRepository UserRepository
+@inject DragodindeGenealogic DragodindeGenealogic
+@inject DragodindeReproduction DragodindeReproduction
+@inject StringComparerCustom StringComparerCustom
+@inject DragodindeManager DragodindeManager
 @implements IDisposable
 
 <PageTitle>Home</PageTitle>
@@ -84,6 +89,7 @@
 	<div class="line" style="left: 56.25%;"></div>
 	<div class="line" style="left: 68.75%;"></div>
 	<div class="line" style="left: 81.25%;"></div>
+    using DragoDinde_MudBlazor.Business;
 	<div class="line" style="left: 93.75%;"></div>
 	<div class="level">
 		<div class="box" id="box17" drop-zone="true"></div><div class="box" id="box18" drop-zone="true"></div><div class="box" id="box19" drop-zone="true"></div><div class="box" id="box20" drop-zone="true"></div>
@@ -116,16 +122,14 @@
 
 <div>List of possibilities : </div>
 
-
 @foreach (var mp in MatchesPossibilities)
 {
 	<p>@mp.Item1.title : @mp.Item2.ToString("P2")</p>
 }
 
-
-
 @code {
 
+	#region Global Callback
 	delegate void DelegCallbackDrop(string treeCellId, string titleId, string treeCellIdToClean);
 
 	static List<(Guid, DelegCallbackDrop)> callbackDropSubscribers = new List<(Guid, DelegCallbackDrop)>();
@@ -139,7 +143,9 @@
 		else
 			Console.WriteLine("No callback found for guid : " + Guid);
 	}
+	#endregion
 
+	#region Properties
 	private string saveError = "";
 	private List<(string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string droName, DragodindeOption droSaved)>();
 	private string DradoDindeToSave = "";
@@ -150,7 +156,7 @@
 	private Guid idInstance;
 	private IList<Generation> generations;
 	int selectedGeneration = 0;
-	private IList<Color> colors;
+	private IList<DragodindeColor> colors;
 	private int selectedColor = 0;
 	private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
 	private IList<DragodindeOption> dragodindeoptionsToDisplay
@@ -160,80 +166,26 @@
 			Console.WriteLine("value changed - selectedGeneration  = " + selectedGeneration);
 			return dragodindeoptions.Where(x =>
 				(selectedGeneration == 0 || x.stage == selectedGeneration)
-				&& (selectedColor == 0 || StringComparer.ContainsIgnoringAccents(x.title, colors.First(x => x.Id == selectedColor).Name))
+				&& (selectedColor == 0 || StringComparerCustom.ContainsIgnoringAccents(x.title, colors.First(x => x.Id == selectedColor).Name))
 			).ToList();
 		}
 	}
+	#endregion
 
-	public void saveParent(bool isMother) {
+	#region Lifecycle events
 
-		Console.WriteLine("startToSave");
-		if (String.IsNullOrWhiteSpace(DradoDindeToSave)) {
-			saveError = "Pas de nom de dragodinde indiqué";
-			return;
-		}
-
-		Console.WriteLine("search for dro");
-		var posTarget = !isMother ? 29 : 30;
-
-		var dro = getDroByCellPos(posTarget).Clone() as DragodindeOption;
-
-		if (dro == null)
-		{
-			saveError = "Pas de dragodinde trouvé dans l'arbre";
-			return;
-		}
-
-		Console.WriteLine("fill parents of dro");
-
-		dro = FillParentsSaved(dro, posTarget);
-
-		dragodindesSaved.Add(new(DradoDindeToSave, dro));
-		saveError = "Dragodinde sauvegardée";
-
-		string geneticCode = GenerateGeneticCode(dro);
-
-		if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser))
-		{
-			DragodindeRepository.SaveDradoginde(DradoDindeToSave, geneticCode, UserRepository.CurrentUser);
-		}
-
-		Console.WriteLine("dro saved");
-	}
-
-
-	public string GenerateGeneticCode(DragodindeOption dro, string posTree = "")
+	protected override void OnInitialized()
 	{
-		string result = "";
-		if (dro == null)
-			return result;
-		result = posTree + dro.Id.ToString();
-		if (dro.FatherSaved != default(DragodindeOption))
-			result += GenerateGeneticCode(dro.FatherSaved, posTree + "P");
-		if (dro.MotherSaved != default(DragodindeOption))
-			result += GenerateGeneticCode(dro.MotherSaved, posTree + "M");
-		return result;
+		idInstance = Guid.NewGuid();
+		callbackDropSubscribers.Add(new(idInstance, CallbackDropToSubscribe));
+
+		generations = Generation.GenerateGeneration();
+
+		colors = DragodindeColor.GenerateColors();
+
+		dragodindeoptions.AddRange(DragodindeOption.GenerateList());
 	}
 
-	public DragodindeOption FillParentsSaved(DragodindeOption dro, int? cellPos)
-	{
-		if (dro == null || cellPos == null)
-			return null;
-
-		dro = dro.Clone() as DragodindeOption;
-
-		var parentsPos = getParentPos(cellPos.Value);
-		var parents = getParent(cellPos.Value);
-
-		if (parents.father != null) {
-			dro.FatherSaved = FillParentsSaved(parents.father, parentsPos.boxPosFather);
-		}
-		if (parents.mother != null) {
-			dro.MotherSaved = FillParentsSaved(parents.mother, parentsPos.boxPosMother);
-		}
-
-		return dro;
-	}
 
 	public void Dispose()
 	{
@@ -241,571 +193,43 @@
 			callbackDropSubscribers.Remove(callbackDropSubscribers.First(x => x.Item1 == idInstance));
 	}
 
-	protected override void OnInitialized()
-	{
-		idInstance = Guid.NewGuid();
-		callbackDropSubscribers.Add(new(idInstance, CallbackDropToSubscribe));
-
-		generations = new List<Generation>() { new Generation() { Id = 0, Name = "Tous " } };
-		for (int i = 1; i < 11; i++)
-		{
-			generations.Add(new Generation() { Id = i, Name = "Génération " + i });
-		}
-
-		colors = new List<Color>() {
-
-			new Color() { Id = 0, Name = "Tous "},
-			new Color() { Id = 1, Name ="Amande"},
-			new Color() { Id = 2, Name  ="Dorée"},
-			new Color() { Id = 3, Name  ="Ebène"},
-			new Color() { Id = 4, Name  ="Emeraude"},
-			new Color() { Id = 5, Name  ="Indigo"},
-			new Color() { Id = 6, Name  ="Ivoire"},
-			new Color() { Id = 7, Name  ="Orchidée"},
-			new Color() { Id = 8, Name  ="Pourpre"},
-			new Color() { Id = 9, Name  ="Prune"},
-			new Color() { Id = 10, Name  ="Rousse"},
-			new Color() { Id = 11, Name  ="Turquoise"}
-		};
-
-
-		Console.WriteLine("init dragodindeoptions");
-
-		dragodindeoptions.AddRange(
-			new List<DragodindeOption>() {
-			new DragodindeOption { Id = 1, title = "Rousse", abbr = "Ro", colorA = "ff8b00", colorB = "ff8b00", stage = 1, ls = 1 },
-			new DragodindeOption { Id = 2, title = "Amande", abbr = "Am", colorA = "ffebcd", colorB = "ffebcd", stage = 1, ls = 1 },
-			new DragodindeOption { Id = 3, title = "Dorée", abbr = "Do", colorA = "ffd700", colorB = "ffd700", stage = 1, ls = 0.2 },
-			new DragodindeOption { Id = 4, title = "Rousse-Amande", abbr = "Ro-Am", colorA = "ff8b00", colorB = "ffebcd", stage = 2, ls = 0.8 },
-			new DragodindeOption { Id = 5, title = "Rousse-Dorée", abbr = "Ro-Do", colorA = "ff8b00", colorB = "ffd700", stage = 2, ls = 0.8 },
-			new DragodindeOption { Id = 6, title = "Amande-Dorée", abbr = "Am-Do", colorA = "ffebcd", colorB = "ffd700", stage = 2, ls = 0.8 },
-			new DragodindeOption { Id = 7, title = "Indigo", abbr = "In", colorA = "4a0081", colorB = "4a0081", stage = 3, ls = 0.8 },
-			new DragodindeOption { Id = 8, title = "Ébène", abbr = "Eb", colorA = "130000", colorB = "130000", stage = 3, ls = 0.8 },
-			new DragodindeOption { Id = 9, title = "Rousse-Indigo", abbr = "Ro-In", colorA = "ff8b00", colorB = "4a0081", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 10, title = "Rousse-Ébène", abbr = "Ro-Eb", colorA = "ff8b00", colorB = "130000", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 11, title = "Amande-Indigo", abbr = "Am-In", colorA = "ffebcd", colorB = "4a0081", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 12, title = "Amande-Ébène", abbr = "Am-Eb", colorA = "ffebcd", colorB = "130000", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 13, title = "Dorée-Indigo", abbr = "Do-In", colorA = "ffd700", colorB = "4a0081", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 14, title = "Dorée-Ébène", abbr = "Do-Eb", colorA = "ffd700", colorB = "130000", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 15, title = "Indigo-Ébène", abbr = "In-Eb", colorA = "4a0081", colorB = "130000", stage = 4, ls = 0.8 },
-			new DragodindeOption { Id = 16, title = "Pourpre", abbr = "Po", colorA = "dc133b", colorB = "dc133b", stage = 5, ls = 0.6 },
-			new DragodindeOption { Id = 17, title = "Orchidée", abbr = "Or", colorA = "f200f2", colorB = "f200f2", stage = 5, ls = 0.6 },
-			new DragodindeOption { Id = 18, title = "Rousse-Pourpre", abbr = "Ro-Po", colorA = "ff8b00", colorB = "dc133b", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 19, title = "Rousse-Orchidée", abbr = "Ro-Or", colorA = "ff8b00", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 20, title = "Amande-Pourpre", abbr = "Am-Po", colorA = "ffebcd", colorB = "dc133b", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 21, title = "Amande-Orchidée", abbr = "Am-Or", colorA = "ffebcd", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 22, title = "Dorée-Pourpre", abbr = "Do-Po", colorA = "ffd700", colorB = "dc133b", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 23, title = "Dorée-Orchidée", abbr = "Do-Or", colorA = "ffd700", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 24, title = "Indigo-Pourpre", abbr = "In-Po", colorA = "4a0081", colorB = "dc133b", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 25, title = "Indigo-Orchidée", abbr = "In-Or", colorA = "4a0081", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 26, title = "Ébène-Pourpre", abbr = "Eb-Po", colorA = "130000", colorB = "dc133b", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 27, title = "Ébène-Orchidée", abbr = "Eb-Or", colorA = "130000", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 28, title = "Pourpre-Orchidée", abbr = "Po-Or", colorA = "dc133b", colorB = "f200f2", stage = 6, ls = 0.6 },
-			new DragodindeOption { Id = 29, title = "Ivoire", abbr = "Iv", colorA = "fffff0", colorB = "fffff0", stage = 7, ls = 0.6 },
-			new DragodindeOption { Id = 30, title = "Turquoise", abbr = "Tu", colorA = "3fe0d0", colorB = "3fe0d0", stage = 7, ls = 0.6 },
-			new DragodindeOption { Id = 31, title = "Rousse-Ivoire", abbr = "Ro-Iv", colorA = "ff8b00", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 32, title = "Rousse-Turquoise", abbr = "Ro-Tu", colorA = "ff8b00", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 33, title = "Amande-Ivoire", abbr = "Am-Iv", colorA = "ffebcd", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 34, title = "Amande-Turquoise", abbr = "Am-Tu", colorA = "ffebcd", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 35, title = "Dorée-Ivoire", abbr = "Do-Iv", colorA = "ffd700", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 36, title = "Dorée-Turquoise", abbr = "Do-Tu", colorA = "ffd700", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 37, title = "Indigo-Ivoire", abbr = "In-Iv", colorA = "4a0081", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 38, title = "Indigo-Turquoise", abbr = "In-Tu", colorA = "4a0081", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 39, title = "Ébène-Ivoire", abbr = "Eb-Iv", colorA = "130000", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 40, title = "Ébène-Turquoise", abbr = "Eb-Tu", colorA = "130000", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 41, title = "Pourpre-Ivoire", abbr = "Po-Iv", colorA = "dc133b", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 42, title = "Pourpre-Turquoise", abbr = "Po-Tu", colorA = "dc133b", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 43, title = "Orchidée-Ivoire", abbr = "Or-Iv", colorA = "f200f2", colorB = "fffff0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 44, title = "Orchidée-Turquoise", abbr = "Or-Tu", colorA = "f200f2", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 45, title = "Ivoire-Turquoise", abbr = "Iv-Tu", colorA = "fffff0", colorB = "3fe0d0", stage = 8, ls = 0.4 },
-			new DragodindeOption { Id = 46, title = "Émeraude", abbr = "Em", colorA = "31cd31", colorB = "31cd31", stage = 9, ls = 0.4 },
-			new DragodindeOption { Id = 47, title = "Prune", abbr = "Pr", colorA = "dd9fdd", colorB = "dd9fdd", stage = 9, ls = 0.4 },
-			new DragodindeOption { Id = 48, title = "Rousse-Émeraude", abbr = "Ro-Em", colorA = "ff8b00", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 49, title = "Rousse-Prune", abbr = "Ro-Pr", colorA = "ff8b00", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 50, title = "Amande-Émeraude", abbr = "Am-Em", colorA = "ffebcd", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 51, title = "Amande-Prune", abbr = "Am-Pr", colorA = "ffebcd", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 52, title = "Dorée-Émeraude", abbr = "Do-Em", colorA = "ffd700", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 53, title = "Dorée-Prune", abbr = "Do-Pr", colorA = "ffd700", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 54, title = "Indigo-Émeraude", abbr = "In-Em", colorA = "4a0081", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 55, title = "Indigo-Prune", abbr = "In-Pr", colorA = "4a0081", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 56, title = "Ébène-Émeraude", abbr = "Eb-Em", colorA = "130000", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 57, title = "Ébène-Prune", abbr = "Eb-Pr", colorA = "130000", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 58, title = "Pourpre-Émeraude", abbr = "Po-Em", colorA = "dc133b", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 59, title = "Pourpre-Prune", abbr = "Po-Pr", colorA = "dc133b", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 60, title = "Orchidée-Émeraude", abbr = "Or-Em", colorA = "f200f2", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 61, title = "Orchidée-Prune", abbr = "Or-Pr", colorA = "f200f2", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 62, title = "Ivoire-Émeraude", abbr = "Iv-Em", colorA = "fffff0", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 63, title = "Ivoire-Prune", abbr = "Iv-Pr", colorA = "fffff0", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 64, title = "Turquoise-Émeraude", abbr = "Tu-Em", colorA = "3fe0d0", colorB = "31cd31", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 65, title = "Turquoise-Prune", abbr = "Tu-Pr", colorA = "3fe0d0", colorB = "dd9fdd", stage = 10, ls = 0.2 },
-			new DragodindeOption { Id = 66, title = "Émeraude-Prune", abbr = "Em-Pr", colorA = "31cd31", colorB = "dd9fdd", stage = 10, ls = 0.2 }
-								}
-			);
-
-		Console.WriteLine("init");
-	}
-
-	private void OnChangeTest(ChangeEventArgs e)
-	{
-		Console.WriteLine("OnChangeTest appelé avec la valeur  = " + e.Value.ToString());
-	}
-	public class Generation
-	{
-		public int Id { get; set; }
-
-		public string Name { get; set; }
-	}
-
-
-	public class Color
-	{
-		public int Id { get; set; }
-
-		public string Name { get; set; }
-	}
-
-	public class DragodindeOption : ICloneable
-	{
-		public int Id { get; set; }
-		public string title { get; set; }
-
-		public string abbr { get; set; }
-
-		public string colorA { get; set; }
-
-		public string colorB { get; set; }
-
-		public int stage { get; set; }
-
-		public double ls { get; set; }
-		public int gsw { get; set; }
-
-
-
-		public string Selector { get; set; } = "zone1";
-
-		public object Clone()
-		{
-			// Crée une nouvelle instance de DragodindeOption
-			DragodindeOption clone = new DragodindeOption();
-
-			// Copie les valeurs des propriétés
-			clone.Id = this.Id;
-			clone.title = this.title;
-			clone.abbr = this.abbr;
-			clone.colorA = this.colorA;
-			clone.colorB = this.colorB;
-			clone.stage = this.stage;
-			clone.ls = this.ls;
-			clone.gsw = this.gsw;
-			clone.Selector = this.Selector;
-			clone.MotherSaved = this.MotherSaved;
-			clone.FatherSaved = this.FatherSaved;
-
-			return clone;
-		}
-
-		public DragodindeOption MotherSaved { get; set; }
-		public DragodindeOption FatherSaved { get; set; }
-	}
-
-	public class DragodindeTreeCell
-	{
-		public string CellId { get; set; }
-		public DragodindeOption dragodindeOption { get; set; }
-	}
-
-	public Dictionary<int, double> MateWith(DragodindeOption source, DragodindeOption turkey) // last implement
-	{
-
-		Console.WriteLine("MateWith - start : " + source.Id + " | " + turkey.Id);
-
-		// Vérifier les paramètres
-		if (turkey == null || !(turkey is DragodindeOption))
-		{
-			throw new ArgumentException("Wrong parameter");
-		}
-
-		Console.WriteLine("MateWith - sum father ");
-
-		// Somme des poids de sélection génétique de chaque arbre généalogique
-		// 1) this/father
-		Dictionary<int, double> fatherWeights = new Dictionary<int, double>();
-		double fatherWeightsSum = 0;
-		List<DragodindeOption> fathertree = new List<DragodindeOption>() { turkey };
-		fathertree.AddRange(getParents(turkey));
-
-		Console.WriteLine("MateWith - father tree : " + fathertree.Count());
-
-		foreach (var v in fathertree)
-		{
-			if (!fatherWeights.ContainsKey(v.Id))
-			{
-				fatherWeights[v.Id] = 0;
-			}
-			fatherWeights[v.Id] += v.gsw;
-			fatherWeightsSum += v.gsw;
-			Console.WriteLine("MateWith - fathertree - gsw : " + v.gsw);
-		}
-		Console.WriteLine("MateWith - sum father fatherWeights : " + fatherWeights.Count());
-		Console.WriteLine("MateWith - sum father end : " + fatherWeightsSum);
-
-		Console.WriteLine("MateWith - sum mother ");
-		// 2) turkey/mother
-		Dictionary<int, double> motherWeights = new Dictionary<int, double>();
-		double motherWeightsSum = 0;
-		List<DragodindeOption> mothertree = new List<DragodindeOption>() { source };
-		mothertree.AddRange(getParents(source));
-		foreach (var v in mothertree)
-		{
-			if (!motherWeights.ContainsKey(v.Id))
-			{
-				motherWeights[v.Id] = 0;
-			}
-			motherWeights[v.Id] += v.gsw;
-			motherWeightsSum += v.gsw;
-		}
-		Console.WriteLine("MateWith - sum mother end : " + motherWeightsSum);
-
-		Dictionary<int, double> births = new Dictionary<int, double>();
-
-
-
-		Console.WriteLine("MateWith - proba birth ");
-		// Pour chaque sélection possible
-		foreach (var fatherSortWeight in fatherWeights)
-		{
-			foreach (var motherSortWeight in motherWeights)
-			{
-				// Calculer la probabilité de cette sélection
-				double p1 = fatherSortWeight.Value / fatherWeightsSum;
-				double p2 = motherSortWeight.Value / motherWeightsSum;
-				double p = p1 * p2;
-
-				// Déterminer les poids de combinaison génétique
-				double gcw1 = getGCW(fatherSortWeight.Key);
-				double gcw2 = getGCW(motherSortWeight.Key);
-				double gcwm = 0; // Poids de mélange
-
-				// Le mélange est-il possible ?
-				if (COMBINATIONS.ContainsKey(fatherSortWeight.Key) &&
-					COMBINATIONS[fatherSortWeight.Key].ContainsKey(motherSortWeight.Key))
-				{
-					int mix = COMBINATIONS[fatherSortWeight.Key][motherSortWeight.Key];
-					gcwm = getGCW(mix) / 2;
-				}
-
-				// Calculer et sauvegarder les probabilités résultantes
-				// Couleur 1
-				if (!births.ContainsKey(fatherSortWeight.Key))
-				{
-					births[fatherSortWeight.Key] = 0;
-				}
-				births[fatherSortWeight.Key] += p * gcw1 / (gcw1 + gcw2 + gcwm);
-
-				// Couleur 2
-				if (!births.ContainsKey(motherSortWeight.Key))
-				{
-					births[motherSortWeight.Key] = 0;
-				}
-				births[motherSortWeight.Key] += p * gcw2 / (gcw1 + gcw2 + gcwm);
-
-				// Mélange
-				if (gcwm > 0)
-				{
-					int mix = COMBINATIONS[fatherSortWeight.Key][motherSortWeight.Key];
-					if (!births.ContainsKey(mix))
-					{
-						births[mix] = 0;
-					}
-					births[mix] += p * gcwm / (gcw1 + gcw2 + gcwm);
-				}
-			}
-		}
-		Console.WriteLine("MateWith - end proba birth ");
-
-
-		return births;
-	}
-
-	public void UpdateProbabilities()
-	{
-		Console.WriteLine("Start proba");
-		MatchesPossibilities.Clear();
-
-		var parents = getParent(31);
-
-
-		Console.WriteLine("Start proba - parents count : " + parents);
-
-		Console.WriteLine("Start proba - get parent");
-		// Check if the father and mother are set
-		if (parents.father == null || parents.mother == null)
-		{
-			Console.WriteLine("Children not set.");
-			return;
-		}
-
-		Console.WriteLine("Start proba - father tree");
-		List<DragodindeOption> fatherTree = new List<DragodindeOption>();
-		fatherTree.Add(parents.father);
-		fatherTree.AddRange(getParents(parents.father));
-
-		// Get the father tree
-		foreach (var el in fatherTree)
-		{
-			if (dragodindeoptions.Any(dro => dro.Id == el.Id))
-			{
-				var gsw = el.gsw;
-				if (gsw == 10 && FatherPredisp)
-					el.gsw = 20;
-			}
-		}
-
-		Console.WriteLine("Start proba - mother tree");
-		// Get the mother tree
-		List<DragodindeOption> motherTree = new List<DragodindeOption>();
-		motherTree.Add(parents.mother);
-		motherTree.AddRange(getParents(parents.mother));
-
-		foreach (var el in motherTree)
-		{
-			if (dragodindeoptions.Any(dro => dro.Id == el.Id))
-			{
-				var gsw = el.gsw;
-				if (gsw == 10 && MotherPredisp)
-					el.gsw = 20;
-			}
-		}
-
-
-		Console.WriteLine("Start proba - mate");
-		// Mate the parents & display the result
-		var children = MateWith(parents.father, parents.mother);
-
-
-		Console.WriteLine("Start proba - children : " + children.Count());
-		foreach (var child in children.OrderByDescending(c => c.Value).ToList())
-		{
-			MatchesPossibilities.Add(new(dragodindeoptions.FirstOrDefault(x => x.Id == child.Key), child.Value));
-		}
-		Console.WriteLine("Start proba - end");
-	}
-
-	public List<DragodindeOption> getParents(DragodindeOption dro)
-	{
-		List<DragodindeOption> parentsFound = new List<DragodindeOption>();
-
-		var parents = getParent(dro);
-
-		if (parents.father != null){
-			parentsFound.Add(parents.father);
-			parentsFound.AddRange(getParents(parents.father));
-		}
-		if (parents.mother != null)
-		{
-			parentsFound.Add(parents.mother);
-			parentsFound.AddRange(getParents(parents.mother));
-		}
-
-		return parentsFound;
-	}
-
-	public (DragodindeOption father, DragodindeOption mother) getParent(DragodindeOption dro)
-	{
-		string CellId = cells.FirstOrDefault(x => x.dragodindeOption == dro)?.CellId;
-		if (String.IsNullOrWhiteSpace(CellId))
-			return (null, null);
-		int boxPos = int.Parse(CellId.Replace("box", ""));
-		return getParent(boxPos);
-	}
-
-	public (DragodindeOption father, DragodindeOption mother) getParent(int boxPos)
-	{
-		if (boxPos < 17)
-			return (null, null);
-		switch (boxPos)
-		{
-			case 17:
-				return (getDroByCellPos(1), getDroByCellPos(1));
-			case 18:
-				return (getDroByCellPos(3), getDroByCellPos(4));
-			case 19:
-				return (getDroByCellPos(5), getDroByCellPos(6));
-			case 20:
-				return (getDroByCellPos(7), getDroByCellPos(8));
-			case 21:
-				return (getDroByCellPos(9), getDroByCellPos(10));
-			case 22:
-				return (getDroByCellPos(11), getDroByCellPos(12));
-			case 23:
-				return (getDroByCellPos(13), getDroByCellPos(14));
-			case 24:
-				return (getDroByCellPos(15), getDroByCellPos(16));
-			case 25:
-				return (getDroByCellPos(17), getDroByCellPos(18));
-			case 26:
-				return (getDroByCellPos(19), getDroByCellPos(20));
-			case 27:
-				return (getDroByCellPos(21), getDroByCellPos(22));
-			case 28:
-				return (getDroByCellPos(23), getDroByCellPos(24));
-			case 29:
-				return (getDroByCellPos(25), getDroByCellPos(26));
-			case 30:
-				return (getDroByCellPos(27), getDroByCellPos(28));
-			case 31:
-				return (getDroByCellPos(29), getDroByCellPos(30));
-			default:
-				return (null, null);
-		}
-	}
-	
-	public (int? boxPosFather, int? boxPosMother) getParentPos(int boxPos)
-	{
-		if (boxPos < 17)
-			return (null, null);
-		switch (boxPos)
-		{
-			case 17:
-				return (1, 1);
-			case 18:
-				return (3, 4);
-			case 19:
-				return (5, 6);
-			case 20:
-				return (7, 8);
-			case 21:
-				return (9, 10);
-			case 22:
-				return (11, 12);
-			case 23:
-				return (13, 14);
-			case 24:
-				return (15, 16);
-			case 25:
-				return (17, 18);
-			case 26:
-				return (19, 20);
-			case 27:
-				return (21, 22);
-			case 28:
-				return (23, 24);
-			case 29:
-				return (25, 26);
-			case 30:
-				return (27, 28);
-			case 31:
-				return (29, 30);
-			default:
-				return (null, null);
-		}
-	}
-
-	public DragodindeOption getDroByCellPos(int cellPos)
-	{
-		var result = cells.FirstOrDefault(x => x.CellId == "box" + cellPos)?.dragodindeOption ?? null;
-		int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 6 : 10;
-		if (result != null)
-			result.gsw = gswScore;
-		return result;
-	}
-
-
-	public double getGCW(int sortId)
-	{
-		var dro = dragodindeoptions.FirstOrDefault(s => s.Id == sortId);
-		if (dro == null)
-			return 0;
-		return (100 * dro.ls) / (2 - dro.stage % 2);
-	}
-
-
-	public class DropItem
-	{
-		public string Name { get; init; }
-		public string Identifier { get; set; }
-	}
-
-	public static class StringComparer
-	{
-		public static bool CompareIgnoringAccents(string str1, string str2)
-		{
-			if (str1 == null || str2 == null)
-				return str1 == str2;
-
-			string normalizedStr1 = str1.Normalize(NormalizationForm.FormD);
-			string normalizedStr2 = str2.Normalize(NormalizationForm.FormD);
-
-			string withoutAccentsStr1 = RemoveAccents(normalizedStr1);
-			string withoutAccentsStr2 = RemoveAccents(normalizedStr2);
-
-			return string.Equals(withoutAccentsStr1, withoutAccentsStr2, StringComparison.OrdinalIgnoreCase);
-		}
-
-		public static bool ContainsIgnoringAccents(string source, string toCheck)
-		{
-			if (source == null || toCheck == null)
-				return false;
-
-			string normalizedSource = source.Normalize(NormalizationForm.FormD);
-			string normalizedToCheck = toCheck.Normalize(NormalizationForm.FormD);
-
-			string withoutAccentsSource = RemoveAccents(normalizedSource);
-			string withoutAccentsToCheck = RemoveAccents(normalizedToCheck);
-
-			return withoutAccentsSource.IndexOf(withoutAccentsToCheck, StringComparison.OrdinalIgnoreCase) >= 0;
-		}
-
-
-		private static string RemoveAccents(string input)
-		{
-			var chars = input.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray();
-			return new string(chars);
-		}
+	#endregion
+
+	#region Events
+	public void saveParent(bool isMother){
+		DragodindeManager.SaveParent(isMother, DradoDindeToSave, ref saveError, ref cells, ref dragodindesSaved);
 	}
 
 	private async Task CreateCopyOfDiv(string id)
 	{
 		await JSRuntime.InvokeVoidAsync("copyAndEnableDrag", "do-id-" + id);
 	}
+	#endregion
 
-
+	#region JsInterop
 	[JSInvokable]
 	public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean)
 	{
-		Console.WriteLine("titleId : " + titleId);
 		titleId = titleId.Replace("clone-", "").Replace("do-id-", "");
-
-		Console.WriteLine("Fonction C# appelée depuis JavaScript !");
-		Console.WriteLine("treeCellId : " + treeCellId);
-		Console.WriteLine("titleId : " + titleId);
-		Console.WriteLine("treeCellIdToClean : " + treeCellIdToClean);
 
 		if (treeCellId == null)
 		{
-			Console.WriteLine("treecell null");
 			var dtcToRemove = cells.FirstOrDefault(x => x.dragodindeOption?.title == titleId);
 			if (dtcToRemove != null)
 				cells.Remove(dtcToRemove);
 		}
 		else
 		{
-			Console.WriteLine("treecell not null : " + titleId);
-			DragodindeOption dro = dragodindeoptions.FirstOrDefault(x => StringComparer.CompareIgnoringAccents(x.title, titleId))?.Clone() as DragodindeOption ?? null;
+			DragodindeOption dro = dragodindeoptions.FirstOrDefault(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId))?.Clone() as DragodindeOption ?? null;
 
 			int cellPos = int.Parse(treeCellId.Replace("box", ""));
 			int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 9 : 10;
 			dro.gsw = gswScore;
 
-			Console.WriteLine("dro : " + dro?.title);
 			if (cells.Any(c => c.CellId == treeCellId))
-				cells.First(c => c.CellId == treeCellId).dragodindeOption = dragodindeoptions.First(x => StringComparer.CompareIgnoringAccents(x.title, titleId));
+				cells.First(c => c.CellId == treeCellId).dragodindeOption = dragodindeoptions.First(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId));
 			else
-				cells.Add(new DragodindeTreeCell() { CellId = treeCellId, dragodindeOption = dragodindeoptions.First(x => StringComparer.CompareIgnoringAccents(x.title, titleId)) });
-
-
-
+				cells.Add(new DragodindeTreeCell() { CellId = treeCellId, dragodindeOption = dragodindeoptions.First(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId)) });
 		}
 
 		if (!String.IsNullOrWhiteSpace(treeCellIdToClean))
@@ -815,38 +239,11 @@
 				cells.Remove(dtcToRemove);
 		}
 
-		Console.WriteLine("Cells : " + cells.Count());
-		UpdateProbabilities();
+		DragodindeReproduction.UpdateProbabilities(ref dragodindeoptions, FatherPredisp, MotherPredisp, ref cells);
 		StateHasChanged();
 	}
-
-	public static Dictionary<int, Dictionary<int, int>> COMBINATIONS = new Dictionary<int, Dictionary<int, int>>
-	{
-		{ 0, new Dictionary<int, int> { { 1, 3 }, { 2, 4 }, { 6, 8 }, { 7, 9 }, { 15, 17 }, { 16, 18 }, { 28, 30 }, { 29, 31 }, { 45, 47 }, { 46, 48 } } },
-		{ 1, new Dictionary<int, int> { { 0, 3 }, { 2, 5 }, { 6, 10 }, { 7, 11 }, { 15, 19 }, { 16, 20 }, { 28, 32 }, { 29, 33 }, { 45, 49 }, { 46, 50 } } },
-		{ 2, new Dictionary<int, int> { { 0, 4 }, { 1, 5 }, { 6, 12 }, { 7, 13 }, { 15, 21 }, { 16, 22 }, { 28, 34 }, { 29, 35 }, { 45, 51 }, { 46, 52 } } },
-		{ 6, new Dictionary<int, int> { { 0, 8 }, { 1, 10 }, { 2, 12 }, { 7, 14 }, { 15, 23 }, { 16, 24 }, { 28, 36 }, { 29, 37 }, { 45, 53 }, { 46, 54 } } },
-		{ 7, new Dictionary<int, int> { { 0, 9 }, { 1, 11 }, { 2, 13 }, { 6, 14 }, { 15, 25 }, { 16, 26 }, { 28, 38 }, { 29, 39 }, { 45, 55 }, { 46, 56 } } },
-		{ 15, new Dictionary<int, int> { { 0, 17 }, { 1, 17 }, { 2, 21 }, { 6, 23 }, { 7, 25 }, { 16, 27 }, { 28, 40 }, { 29, 41 }, { 45, 57 }, { 46, 58 } } },
-		{ 16, new Dictionary<int, int> { { 0, 18 }, { 1, 20 }, { 2, 22 }, { 6, 24 }, { 7, 26 }, { 15, 27 }, { 28, 42 }, { 29, 43 }, { 45, 59 }, { 46, 60 } } },
-		{ 28, new Dictionary<int, int> { { 0, 30 }, { 1, 30 }, { 2, 34 }, { 6, 36 }, { 7, 38 }, { 15, 40 }, { 16, 42 }, { 29, 44 }, { 45, 61 }, { 46, 62 } } },
-		{ 29, new Dictionary<int, int> { { 0, 31 }, { 1, 31 }, { 2, 35 }, { 6, 37 }, { 7, 39 }, { 15, 41 }, { 16, 43 }, { 28, 44 }, { 45, 63 }, { 46, 64 } } },
-		{ 45, new Dictionary<int, int> { { 0, 47 }, { 1, 49 }, { 2, 51 }, { 6, 53 }, { 7, 55 }, { 15, 57 }, { 16, 59 }, { 28, 61 }, { 29, 63 }, { 46, 65 } } },
-		{ 46, new Dictionary<int, int> { { 0, 48 }, { 1, 50 }, { 2, 52 }, { 6, 54 }, { 7, 56 }, { 15, 58 }, { 16, 60 }, { 28, 62 }, { 29, 64 }, { 45, 65 } } },
-		{ 3, new Dictionary<int, int> { { 5, 6 }, { 14, 15 } } },
-		{ 4, new Dictionary<int, int> { { 5, 7 }, { 14, 16 } } },
-		{ 5, new Dictionary<int, int> { { 3, 6 }, { 4, 7 } } },
-		{ 14, new Dictionary<int, int> { { 3, 15 }, { 4, 16 } } },
-		{ 23, new Dictionary<int, int> { { 27, 28 } } },
-		{ 26, new Dictionary<int, int> { { 27, 29 } } },
-		{ 27, new Dictionary<int, int> { { 23, 28 }, { 26, 29 } } },
-		{ 40, new Dictionary<int, int> { { 44, 45 } } },
-		{ 43, new Dictionary<int, int> { { 44, 46 } } },
-		{ 44, new Dictionary<int, int> { { 40, 45 }, { 43, 46 } } }
-	};
-
+	#endregion
 }
-
 
 <script>
 	function copyAndEnableDrag(divId) {
@@ -921,10 +318,6 @@
 		event.preventDefault();
 	};
 </script>
-
-
-
-
 
 <style>
 	.container {

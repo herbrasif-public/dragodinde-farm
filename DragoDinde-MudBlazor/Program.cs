@@ -1,12 +1,17 @@
 using MudBlazor.Services;
 using DragoDinde_MudBlazor.Components;
 using DragoDinde_MudBlazor.Repositories;
+using DragoDinde_MudBlazor.Business;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = Environment.GetEnvironmentVariable("ConnectionString");
-builder.Services.AddSingleton(new UserRepository(connectionString));
-builder.Services.AddSingleton(new DragodindeRepository(connectionString));
+builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<DragodindeRepository>();
+
+builder.Services.AddSingleton<StringComparer>();
+builder.Services.AddSingleton<DragodindeGenealogic>();
+builder.Services.AddSingleton<DragodindeReproduction>();
+
 // Add MudBlazor services
 builder.Services.AddMudServices();
 

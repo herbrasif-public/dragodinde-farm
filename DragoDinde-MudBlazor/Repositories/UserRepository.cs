@@ -13,9 +13,9 @@ namespace DragoDinde_MudBlazor.Repositories
 
         private readonly string _connectionString;
 
-        public UserRepository(string connectionString)
+        public UserRepository()
         {
-            _connectionString = connectionString;
+            _connectionString = Environment.GetEnvironmentVariable("ConnectionString");
         }
 
         public void RegisterUser(string username, string password)
