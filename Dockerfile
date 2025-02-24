@@ -18,5 +18,4 @@ RUN dotnet publish "DragoDinde-MudBlazor.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-LS
-ENTRYPOINT ["dotnet", "DragoDinde-MudBlazor.dll"]
+ENTRYPOINT ["dotnet", "DragoDinde_MudBlazor.dll"]

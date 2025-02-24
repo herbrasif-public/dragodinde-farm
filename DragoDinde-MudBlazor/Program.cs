@@ -8,9 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<DragodindeRepository>();
 
-builder.Services.AddSingleton<StringComparer>();
+builder.Services.AddSingleton<StringComparerCustom>();
 builder.Services.AddSingleton<DragodindeGenealogic>();
 builder.Services.AddSingleton<DragodindeReproduction>();
+builder.Services.AddSingleton<DragodindeManager>();
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
