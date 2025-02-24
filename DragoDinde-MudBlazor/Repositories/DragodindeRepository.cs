@@ -1,6 +1,7 @@
 ﻿using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 namespace DragoDinde_MudBlazor.Repositories
 {
@@ -32,6 +33,24 @@ END", connection);
             }
         }
         
+        public List<(string Name, string GeneticCode)> LoadDragodinde(string username)
+        {
+            List<(string Name, string GeneticCode)> result = new List<(string Name, string GeneticCode)>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var command = new SqlCommand("SELECT Name, GeneticCode FROM Dradogindes WHERE Username = @Username", connection);
+                command.Parameters.AddWithValue("@Username", username);
+                var reader = command.ExecuteReader();
+                while(reader.Read())
+                {
+                    string name = reader.GetString(0);
+                    string geneticCode = reader.GetString(1);
+                    result.Add(new(name, geneticCode));
+                }
+            }
+            return result;
+        }
     }
 
 }
