@@ -18,18 +18,18 @@ namespace DragoDinde_MudBlazor.Business
             this.userRepository = userRepository;
         }
 
-        public List<(string name, DragodindeOption dragodindeOption)> LoadDradogindes(string userName, ref List<DragodindeOption> dragodindeOptions)
+        public List<(string index, string name, DragodindeOption dragodindeOption)> LoadDradogindes(string userName, ref List<DragodindeOption> dragodindeOptions)
         {
-            List<(string name, DragodindeOption dragodindeOption)> result = new List<(string name, DragodindeOption dragodindeOption)>();
+            List<(string index, string name, DragodindeOption dragodindeOption)> result = new List<(string index, string name, DragodindeOption dragodindeOption)>();
             var dragodindes = this.dragodindeRepository.LoadDragodinde(userName);
             foreach (var dro in dragodindes)
             {
-                result.Add(new (dro.Name, ReconstructCreatureFromGeneticCode(dro.GeneticCode, ref dragodindeOptions)));
+                result.Add(new (Guid.NewGuid().ToString(), dro.Name, ReconstructCreatureFromGeneticCode(dro.GeneticCode, ref dragodindeOptions)));
             }
             return result;
         }
 
-        public void SaveParent(bool isMother, string dradoDindeToSave, ref string saveError, ref List<DragodindeTreeCell> cells, ref List<(string droName, DragodindeOption droSaved)> dragodindesSaved) {
+        public void SaveParent(bool isMother, string dradoDindeToSave, ref string saveError, ref List<DragodindeTreeCell> cells, ref List<(string index, string droName, DragodindeOption droSaved)> dragodindesSaved) {
             if (String.IsNullOrWhiteSpace(dradoDindeToSave)) {
                 saveError = "Pas de nom de dragodinde indiqué";
                 return;
@@ -47,7 +47,7 @@ namespace DragoDinde_MudBlazor.Business
             
             dro = FillParentsSaved(dro, posTarget,ref cells);
 
-            dragodindesSaved.Add(new(dradoDindeToSave, dro));
+            dragodindesSaved.Add(new(Guid.NewGuid().ToString(), dradoDindeToSave, dro));
             
             string geneticCode = GenerateGeneticCode(dro);
 
@@ -131,6 +131,8 @@ namespace DragoDinde_MudBlazor.Business
                 return null;
 
             dro = dro.Clone() as DragodindeOption;
+            dro.FatherSaved = null;
+            dro.MotherSaved = null;
 
             var parentsPos = this.dragodindeGenealogic.getParentPos(cellPos.Value);
             var parents = this.dragodindeGenealogic.getParent(cellPos.Value, ref cells);

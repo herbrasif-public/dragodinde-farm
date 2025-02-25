@@ -34,8 +34,8 @@ namespace DragoDinde_MudBlazor.Models
             clone.ls = this.ls;
             clone.gsw = this.gsw;
             clone.Selector = this.Selector;
-            clone.MotherSaved = this.MotherSaved;
             clone.FatherSaved = this.FatherSaved;
+            clone.MotherSaved = this.MotherSaved;
 
             return clone;
         }

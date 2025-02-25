@@ -66,17 +66,17 @@
     <div class="form-container">
         <h2>Dragodindes sauvegardées :</h2>
 
-        <div>
+        <div style="display: flex;
+				flex-wrap: wrap;
+				gap: 10px;">
             @foreach (var dragodindeoption in dragodindesSaved)
             {
-                <div style="display: inline-flex">
-                    <p>@dragodindeoption.droName</p>
-                    <div id="do-id-@dragodindeoption.droSaved.title"
-                         title="@dragodindeoption.droSaved.title"
-                         droSaved="true"
-                         ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
-                         draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
-                </div>
+                <div id="do-id-@dragodindeoption.id"
+                     title="@dragodindeoption.droName"
+                     droSaved="true"
+                     ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+                     draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
+
             }
         </div>
     </div>
@@ -257,7 +257,7 @@
 
     #region Properties
     private string saveError = "";
-    private List<(string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string droName, DragodindeOption droSaved)>();
+    private List<(string id, string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string id, string droName, DragodindeOption droSaved)>();
     private string DradoDindeToSave = "";
     public List<(DragodindeOption, double)> MatchesPossibilities = new List<(DragodindeOption, double)>();
     public List<DragodindeTreeCell> cells = new List<DragodindeTreeCell>();
@@ -368,7 +368,7 @@
         if (cell != null && cell.dragodindeOption != null)
         {
             builder.OpenElement(0, "div");
-            builder.AddAttribute(1, "id", $"copy-do-id-{cell.dragodindeOption.title}");
+            builder.AddAttribute(1, "id", $"copy-do-id-{cell.dragodindeOption.title}--{Guid.NewGuid().ToString()}");
             builder.AddAttribute(2, "title", cell.dragodindeOption.title);
             builder.AddAttribute(3, "ondragstart", "event.dataTransfer.setData('text/plain', event.target.id)");
             builder.AddAttribute(4, "draggable", "true");
@@ -390,38 +390,35 @@
     public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean, string isSaved)
     {
         MatchesPossibilities.Clear();
-        titleId = titleId.Replace("clone-", "").Replace("do-id-", "");
+
+        titleId = titleId.Replace("clone-", "").Replace("do-id-", "").Replace("copy-", "");
+
+        int indexToRemove = titleId.IndexOf("--");
+        if (indexToRemove != -1)
+        {
+            titleId = titleId.Substring(0, indexToRemove);
+        }
+
+        if (isSaved == "true")
+        {
+            // clean tree
+            if (treeCellId == "box29")
+                cells = cells.Where(x => x.CellId != "box29" && x.CellId != "box25" && x.CellId != "box26"
+                && x.CellId != "box17" && x.CellId != "box18" && x.CellId != "box19" && x.CellId != "box20"
+                 && x.CellId != "box1" && x.CellId != "box2" && x.CellId != "box3" && x.CellId != "box4"
+                 && x.CellId != "box5" && x.CellId != "box6" && x.CellId != "box7" && x.CellId != "box8")
+                 .ToList();
+            else if (treeCellId == "box30")
+                cells = cells.Where(x => x.CellId == "box29" || x.CellId == "box25" || x.CellId == "box26"
+                || x.CellId == "box17" || x.CellId == "box18" || x.CellId == "box19" || x.CellId == "box20"
+                 || x.CellId == "box1" || x.CellId == "box2" || x.CellId == "box3" || x.CellId == "box4"
+                 || x.CellId == "box5" || x.CellId == "box6" || x.CellId == "box7" || x.CellId == "box8")
+                 .ToList();
+            else
+                cells.Clear();
+        }
 
         DragodindeGenealogic.UpdateTree(treeCellId, treeCellIdToClean, titleId, isSaved == "true", ref cells, ref dragodindeoptions, ref dragodindesSaved);
-@* 
-        #region UpdateTree
-        if (treeCellId == null)
-        {
-            var dtcToRemove = cells.FirstOrDefault(x => x.dragodindeOption?.title == titleId);
-            if (dtcToRemove != null)
-                cells.Remove(dtcToRemove);
-        }
-        else
-        {
-            DragodindeOption dro = dragodindeoptions.FirstOrDefault(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId))?.Clone() as DragodindeOption ?? null;
-
-            int cellPos = int.Parse(treeCellId.Replace("box", ""));
-            int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 9 : 10;
-            dro.gsw = gswScore;
-
-            if (cells.Any(c => c.CellId == treeCellId))
-                cells.First(c => c.CellId == treeCellId).dragodindeOption = dragodindeoptions.First(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId));
-            else
-                cells.Add(new DragodindeTreeCell() { CellId = treeCellId, dragodindeOption = dragodindeoptions.First(x => StringComparerCustom.CompareIgnoringAccents(x.title, titleId)) });
-        }
-
-        if (!String.IsNullOrWhiteSpace(treeCellIdToClean))
-        {
-            var dtcToRemove = cells.FirstOrDefault(x => x.CellId == treeCellIdToClean);
-            if (dtcToRemove != null)
-                cells.Remove(dtcToRemove);
-        }
-        #endregion *@
 
         var resultProba = DragodindeReproduction.UpdateProbabilities(ref dragodindeoptions, FatherPredisp, MotherPredisp, ref cells);
         if (resultProba != null)
@@ -473,8 +470,8 @@
             var draggableElement = originalDiv.cloneNode(true);
 
             if (document.getElementById(id).getAttribute("clone") === "true") {
-                idSourceToClean = document.getElementById(event.target.id).getAttribute("container-id");
-                
+                idSourceToClean = document.getElementById(id).getAttribute("container-id");
+
             }
 
             if (document.getElementById(event.target.id).getAttribute("clone") === "true") {
@@ -482,9 +479,12 @@
             }
 
                 console.log(event.target);
+                console.log('move');
                 console.log('event.target.id : ' + event.target.id);
                 console.log('id : ' + id);
                 console.log('idSourceToClean : ' + idSourceToClean);
+                console.log('isSaved : ' + isSaved);
+                console.log('isClone : ' + document.getElementById(id).getAttribute("clone"));
             DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, event.target.id, id, idSourceToClean, isSaved)
             .then(datas => {
                 console.log('Fonction C# appelée avec succès');
@@ -499,6 +499,7 @@
             console.log('event.target.id : ' + event.target.id);
             console.log('id : ' + id);
             console.log('idSourceToClean : ' + idSourceToClean);
+                console.log('isSaved : ' + isSaved);
 
 
             DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, null, id, idSourceToClean, isSaved)

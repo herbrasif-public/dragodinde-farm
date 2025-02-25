@@ -13,12 +13,13 @@ namespace DragoDinde_MudBlazor.Business
         }
 
         public List<DragodindeOption> getParents(DragodindeOption dro, ref List<DragodindeTreeCell> cells)
-        {	
+        {
             List<DragodindeOption> parentsFound = new List<DragodindeOption>();
 
             var parents = getParent(dro, ref cells);
 
-            if (parents.father != null){
+            if (parents.father != null)
+            {
                 parentsFound.Add(parents.father);
                 parentsFound.AddRange(getParents(parents.father, ref cells));
             }
@@ -41,8 +42,9 @@ namespace DragoDinde_MudBlazor.Business
         }
 
         public (DragodindeOption father, DragodindeOption mother) getParent(int boxPos, ref List<DragodindeTreeCell> cells)
-        {		if (boxPos < 17)
-			return (null, null);
+        {
+            if (boxPos < 17)
+                return (null, null);
             switch (boxPos)
             {
                 case 17:
@@ -96,7 +98,7 @@ namespace DragoDinde_MudBlazor.Business
             switch (boxPos)
             {
                 case 17:
-                    return (1, 1);
+                    return (1, 2);
                 case 18:
                     return (3, 4);
                 case 19:
@@ -130,58 +132,58 @@ namespace DragoDinde_MudBlazor.Business
             }
         }
 
-        public void UpdateTree(string treeCellId, string treeCellIdToClean, string titleId, bool isSaved, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions, ref List<(string droName, DragodindeOption droSaved)> savedDradogindes)
+        public void UpdateTree(string treeCellId, string treeCellIdToClean, string titleId, bool isSaved, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions, ref List<(string index, string droName, DragodindeOption droSaved)> savedDradogindes)
         {
-            if (treeCellId == null)
-            {
-                var dtcToRemove = cells.FirstOrDefault(x => x.dragodindeOption?.title == titleId);
-                if (dtcToRemove != null)
-                    cells.Remove(dtcToRemove);
-            }
-            else
+
+            if (treeCellId != null)
             {
                 DragodindeOption dro = !isSaved ?
                     dragodindeoptions.FirstOrDefault(x => this.stringComparerCustom.CompareIgnoringAccents(x.title, titleId))?.Clone() as DragodindeOption ?? null
-                    : savedDradogindes.FirstOrDefault(x => this.stringComparerCustom.CompareIgnoringAccents(x.droName, titleId)).droSaved?.Clone() as DragodindeOption ?? null;
+                    : savedDradogindes.FirstOrDefault(x => this.stringComparerCustom.CompareIgnoringAccents(x.index, titleId)).droSaved?.Clone() as DragodindeOption ?? null;
 
                 int cellPos = int.Parse(treeCellId.Replace("box", ""));
                 int gswScore = cellPos < 17 ? 1 : cellPos < 25 ? 3 : cellPos < 29 ? 9 : 10;
                 dro.gsw = gswScore;
 
-                insertCell(cellPos, dro, ref cells);
+                if (isSaved)
+                    UpdateTreeForParent(cellPos, dro, ref cells, ref dragodindeoptions);
+                insertCell(cellPos, dro, ref cells, ref dragodindeoptions);
             }
 
             if (!String.IsNullOrWhiteSpace(treeCellIdToClean))
             {
-                var dtcToRemove = cells.FirstOrDefault(x => x.CellId == treeCellIdToClean);
-                if (dtcToRemove != null)
-                    cells.Remove(dtcToRemove);
+                cells = cells.Where(x => !this.stringComparerCustom.CompareIgnoringAccents(x.CellId, treeCellIdToClean)).ToList();
             }
+
         }
 
-        public void UpdateTreeForParent(int treeCellId,DragodindeOption dro, ref List<DragodindeTreeCell> cells){
+        public void UpdateTreeForParent(int treeCellId, DragodindeOption dro, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions)
+        {
             var parentPos = getParentPos(treeCellId);
             if (dro.MotherSaved != default(DragodindeOption) && parentPos.boxPosMother != null)
             {
                 int pos = parentPos.boxPosMother ?? 0;
-                insertCell(pos, dro.MotherSaved, ref cells);
-                UpdateTreeForParent(pos, dro.MotherSaved, ref cells);
+                UpdateTreeForParent(pos, dro.MotherSaved, ref cells, ref dragodindeoptions);
+                insertCell(pos, dro.MotherSaved, ref cells, ref dragodindeoptions);
             }
             if (dro.FatherSaved != default(DragodindeOption) && parentPos.boxPosFather != null)
             {
                 int pos = parentPos.boxPosFather ?? 0;
-                insertCell(pos, dro.FatherSaved, ref cells);
-                UpdateTreeForParent(pos, dro.FatherSaved, ref cells);
+                UpdateTreeForParent(pos, dro.FatherSaved, ref cells, ref dragodindeoptions);
+                insertCell(pos, dro.FatherSaved, ref cells, ref dragodindeoptions);
             }
         }
 
-        private void insertCell(int treeCellId, DragodindeOption dro, ref List<DragodindeTreeCell> cells) {
-                string cellId = "box"+treeCellId;
-                
-                if (cells.Any(c => c.CellId == cellId))
-                    cells.First(c => c.CellId == cellId).dragodindeOption = dro;
-                else
-                    cells.Add(new DragodindeTreeCell() { CellId = cellId, dragodindeOption =dro });
+        private void insertCell(int treeCellId, DragodindeOption dro, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions)
+        {
+            string cellId = "box" + treeCellId;
+
+            var droToInsert = dragodindeoptions.FirstOrDefault(x => x.Id == dro.Id).Clone() as DragodindeOption;
+
+            if (cells.Any(c => c.CellId == cellId))
+                cells.First(c => c.CellId == cellId).dragodindeOption = droToInsert;
+            else
+                cells.Add(new DragodindeTreeCell() { CellId = cellId, dragodindeOption = droToInsert });
         }
     }
 }
