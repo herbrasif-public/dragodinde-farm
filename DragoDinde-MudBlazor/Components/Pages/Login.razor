@@ -1,0 +1,88 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using DragoDinde_MudBlazor.Repositories
+@inject NavigationManager Navigation
+@inject UserRepository UserRepository
+@inject IJSRuntime JS
+
+<EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label for="username">Nom d'utilisateur:</label>
+        <InputText id="username" @bind-Value="loginModel.Username" />
+    </div>
+    <div>
+        <label for="password">Mot de passe:</label>
+        <InputText id="password" type="password" @bind-Value="loginModel.Password" />
+    </div>
+    <MudCheckBox @bind-Value="newAccount" Label="Créer un nouveau compte ?"></MudCheckBox>
+    <button type="submit">Se connecter</button>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private bool newAccount { get; set; }
+
+    private void HandleLogin()
+    {
+        if (newAccount)
+        {
+            UserRepository.RegisterUser(loginModel.Username, loginModel.Password);
+        }
+
+        string token = UserRepository.ValidateUser(loginModel.Username, loginModel.Password);
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            UserRepository.CurrentUser = loginModel.Username;
+            SetCookie("sessionToken", token).ConfigureAwait(true);
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            // Authentification échouée
+            Console.WriteLine("Nom d'utilisateur ou mot de passe incorrect.");
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required]
+        public string Username { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+    }
+
+    private async Task SetCookie(string cookieName, string cookieValue)
+    {
+        await JS.InvokeVoidAsync("cookieHelper1.setCookie", cookieName, cookieValue, 5);
+    }
+}
+
+<script>
+    window.cookieHelper1 = {
+    setCookie: function (name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    },
+    getCookie: function (name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+};
+
+</script>

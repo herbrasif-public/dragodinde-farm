@@ -1,0 +1,621 @@
+﻿@page "/"
+@using DragoDinde_MudBlazor.Repositories
+@using DragoDinde_MudBlazor.Models
+@using DragoDinde_MudBlazor.Business
+@using MudBlazor
+@using System.Text
+@inject IJSRuntime JSRuntime
+@inject DragodindeRepository DragodindeRepository
+@inject UserRepository UserRepository
+@inject DragodindeGenealogic DragodindeGenealogic
+@inject DragodindeReproduction DragodindeReproduction
+@inject StringComparerCustom StringComparerCustom
+@inject DragodindeManager DragodindeManager
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>Home</PageTitle>
+
+<input type="hidden" id="idInstanceForCallback" value="@idInstance" />
+
+<div class="filter-container">
+    <div class="filter-container-left">
+        <label for="selector-generation">Générations</label>
+        <MudSelect @bind-Value="selectedGeneration">
+            @foreach (var gen in generations)
+            {
+                <MudSelectItem Value="gen.Id">@gen.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+
+    <div class="filter-container-right">
+        <label for="selector-generation">Couleurs</label>
+        <MudSelect @bind-Value="selectedColor">
+            @foreach (var color in colors)
+            {
+                <MudSelectItem Value="color.Id">@color.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+</div>
+
+
+<div class="form-container">
+    <h2>Possiblitées :</h2>
+
+    <div id="do-list" style="display: flex;
+				flex-wrap: wrap;
+				gap: 10px;">
+        @foreach (var dragodindeoption in dragodindeoptionsToDisplay)
+        {
+            @* <div id="do-id-@dragodindeoption.title" onmousedown="copyAndEnableDrag('do-id-@dragodindeoption.title')" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div> *@
+            <div id="do-id-@dragodindeoption.title"
+                 title="@dragodindeoption.title"
+                 droSaved="false"
+                 ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+                 draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
+
+        }
+
+    </div>
+</div>
+
+@if (dragodindesSaved != null && dragodindesSaved.Count() > 0)
+{
+    <div class="form-container">
+        <h2>Dragodindes sauvegardées :</h2>
+
+        <div style="display: flex;
+				flex-wrap: wrap;
+				gap: 10px;">
+            @foreach (var dragodindeoption in dragodindesSaved)
+            {
+                <div id="do-id-@dragodindeoption.id"
+                     title="@dragodindeoption.droName"
+                     droSaved="true"
+                     ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+                     draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
+
+            }
+        </div>
+    </div>
+}
+
+<div class="filter-container">
+    <div class="filter-container-left">
+        <MudCheckBox @bind-Value="MotherPredisp" Label="Mère prédisposée"></MudCheckBox>
+    </div>
+    <div class="filter-container-right">
+        <MudCheckBox @bind-Value="FatherPredisp" Label="Père prédisposé"></MudCheckBox>
+    </div>
+</div>
+
+<div class="container">
+    <div class="level">
+        <div class="box" id="box1" drop-zone="true">
+            @RenderDragodindeOption(1)
+        </div>
+        <div class="box" id="box2" drop-zone="true">
+            @RenderDragodindeOption(2)
+        </div>
+        <div class="box" id="box3" drop-zone="true">
+            @RenderDragodindeOption(3)
+        </div>
+        <div class="box" id="box4" drop-zone="true">
+            @RenderDragodindeOption(4)
+        </div>
+        <div class="box" id="box5" drop-zone="true">
+            @RenderDragodindeOption(5)
+        </div>
+        <div class="box" id="box6" drop-zone="true">
+            @RenderDragodindeOption(6)
+        </div>
+        <div class="box" id="box7" drop-zone="true">
+            @RenderDragodindeOption(7)
+        </div>
+        <div class="box" id="box8" drop-zone="true">
+            @RenderDragodindeOption(8)
+        </div>
+        <div class="box" id="box9" drop-zone="true">
+            @RenderDragodindeOption(9)
+        </div>
+        <div class="box" id="box10" drop-zone="true">
+            @RenderDragodindeOption(10)
+        </div>
+        <div class="box" id="box11" drop-zone="true">
+            @RenderDragodindeOption(11)
+        </div>
+        <div class="box" id="box12" drop-zone="true">
+            @RenderDragodindeOption(12)
+        </div>
+        <div class="box" id="box13" drop-zone="true">
+            @RenderDragodindeOption(13)
+        </div>
+        <div class="box" id="box14" drop-zone="true">
+            @RenderDragodindeOption(14)
+        </div>
+        <div class="box" id="box15" drop-zone="true">
+            @RenderDragodindeOption(15)
+        </div>
+        <div class="box" id="box16" drop-zone="true">
+            @RenderDragodindeOption(16)
+        </div>
+        <div class="vertical-line" style="left: 50%;"></div>
+    </div>
+    <div class="line" style="left: 6.25%;"></div>
+    <div class="line" style="left: 18.75%;"></div>
+    <div class="line" style="left: 31.25%;"></div>
+    <div class="line" style="left: 43.75%;"></div>
+    <div class="line" style="left: 56.25%;"></div>
+    <div class="line" style="left: 68.75%;"></div>
+    <div class="line" style="left: 81.25%;"></div>
+    <div class="line" style="left: 93.75%;"></div>
+    <div class="level">
+        <div class="box" id="box17" drop-zone="true" style="margin-left: -20px;">
+            @RenderDragodindeOption(17)
+        </div>
+        <div class="box" id="box18" drop-zone="true">
+            @RenderDragodindeOption(18)
+        </div>
+        <div class="box" id="box19" drop-zone="true">
+            @RenderDragodindeOption(19)
+        </div>
+        <div class="box" id="box20" drop-zone="true">
+            @RenderDragodindeOption(20)
+        </div>
+        <div class="box" id="box21" drop-zone="true">
+            @RenderDragodindeOption(21)
+        </div>
+        <div class="box" id="box22" drop-zone="true">
+            @RenderDragodindeOption(22)
+        </div>
+        <div class="box" id="box23" drop-zone="true">
+            @RenderDragodindeOption(23)
+        </div>
+        <div class="box" id="box24" drop-zone="true" style="margin-right: -20px;">
+            @RenderDragodindeOption(24)
+        </div>
+        <div class="vertical-line" style="left: 50%;"></div>
+    </div>
+    <div class="line" style="left: 24%;"></div>
+    <div class="line" style="left: 75%;"></div>
+    <div class="level">
+        <div class="box" id="box25" drop-zone="true" style="margin-left: -50px;">
+            @RenderDragodindeOption(25)
+        </div>
+        <div class="box" id="box26" drop-zone="true">
+            @RenderDragodindeOption(26)
+        </div>
+        <div class="box" id="box27" drop-zone="true">
+            @RenderDragodindeOption(27)
+        </div>
+        <div class="box" id="box28" drop-zone="true" style="margin-right: -50px;">
+            @RenderDragodindeOption(28)
+        </div>
+        <div class="vertical-line" style="left: 50%;"></div>
+    </div>
+    <div class="line" style="left: 25%;"></div>
+    <div class="line" style="left: 75%;"></div>
+    <div class="level">
+        <div class="box" id="box29" drop-zone="true" style="margin-left: -150px;">
+            @RenderDragodindeOption(29)
+        </div>
+        <div class="box" id="box30" drop-zone="true" style="margin-right: -150px;">
+            @RenderDragodindeOption(30)
+        </div>
+        <div class="vertical-line" style="left: 50%;"></div>
+    </div>
+    <div class="line" style="left: 50%;"></div>
+    <div class="level" style="display: none;">
+        <div class="box" id="box31"></div>
+    </div>
+</div>
+
+<div class="possibilities-container">
+    <h2>List of possibilities : </h2>
+
+    @foreach (var mp in MatchesPossibilities)
+    {
+        <p>@mp.Item1.title : @mp.Item2.ToString("P2")</p>
+    }
+</div>
+
+<div class="save-container">
+    <h2>Sauvegarder des parents : </h2>
+
+    @if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser))
+    {
+        <MudTextField @bind-Value="DradoDindeToSave" Label="Nom de la dragodinde au sauvegarder" Variant="Variant.Text"></MudTextField>
+        <MudButton Variant="Variant.Filled" Onclick="() => saveParent(false)">Sauvegarder la mère</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="() => saveParent(true)">Sauvegarder le père</MudButton>
+
+        <p>@saveError</p>
+    }
+    else
+    {
+        <p>Vous devez être connecté pour sauvegarder !</p>
+    }
+</div>
+@code {
+
+    #region Global Callback
+    delegate void DelegCallbackDrop(string treeCellId, string titleId, string treeCellIdToClean, string isSaved);
+
+    static List<(Guid, DelegCallbackDrop)> callbackDropSubscribers = new List<(Guid, DelegCallbackDrop)>();
+
+    [JSInvokable]
+    public static void CallbackDrop(string Guid, string treeCellId, string titleId, string treeCellIdToClean, string isSaved)
+    {
+        var cbToUse = callbackDropSubscribers.FirstOrDefault(x => x.Item1.ToString() == Guid);
+        if (cbToUse != default((Guid, DelegCallbackDrop)))
+            cbToUse.Item2(treeCellId, titleId, treeCellIdToClean, isSaved);
+        else
+            Console.WriteLine("No callback found for guid : " + Guid);
+    }
+    #endregion
+
+    #region Properties
+    private string saveError = "";
+    private List<(string id, string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string id, string droName, DragodindeOption droSaved)>();
+    private string DradoDindeToSave = "";
+    public List<(DragodindeOption, double)> MatchesPossibilities = new List<(DragodindeOption, double)>();
+    public List<DragodindeTreeCell> cells = new List<DragodindeTreeCell>();
+    private bool MotherPredisp = false;
+    private bool FatherPredisp = false;
+    private Guid idInstance;
+    private IList<Generation> generations;
+    int selectedGeneration = 0;
+    private IList<DragodindeColor> colors;
+    private int selectedColor = 0;
+    private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
+    private IList<DragodindeOption> dragodindeoptionsToDisplay
+    {
+        get
+        {
+            Console.WriteLine("value changed - selectedGeneration  = " + selectedGeneration);
+            return dragodindeoptions.Where(x =>
+                (selectedGeneration == 0 || x.stage == selectedGeneration)
+                && (selectedColor == 0 || StringComparerCustom.ContainsIgnoringAccents(x.title, colors.First(x => x.Id == selectedColor).Name))
+            ).ToList();
+        }
+    }
+    #endregion
+
+    #region Lifecycle events
+
+
+    protected override void OnInitialized()
+    {
+
+        idInstance = Guid.NewGuid();
+        callbackDropSubscribers.Add(new(idInstance, CallbackDropToSubscribe));
+
+        generations = Generation.GenerateGeneration();
+
+        colors = DragodindeColor.GenerateColors();
+
+        dragodindeoptions.AddRange(DragodindeOption.GenerateList());
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(100);
+        }
+        await ActionAfterLoaded();
+    }
+
+    public async Task ActionAfterLoaded()
+    {
+        bool action = false;
+
+        // if (String.IsNullOrWhiteSpace(UserRepository.CurrentUser)) // ça marche pas T_T
+        // {
+        //     string token = await GetCookie("sessionToken");
+        //     if (!String.IsNullOrWhiteSpace(token))
+        //         UserRepository.ValidateAndUpdateToken(token);
+        //     action = true;
+        // }
+
+        if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser) && dragodindesSaved.Count() == 0)
+        {
+            var droSaved = DragodindeManager.LoadDradogindes(UserRepository.CurrentUser, ref dragodindeoptions);
+            if (droSaved != null)
+            {
+                dragodindesSaved.AddRange(droSaved);
+                action = true;
+            }
+        }
+
+        if (action)
+            StateHasChanged();
+    }
+
+    private async Task EnsureConnectedAsync()
+    {
+        // Attendre que la connexion SignalR soit établie
+        while (!(await JSRuntime.InvokeAsync<bool>("isConnected")))
+        {
+            await Task.Delay(100);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (callbackDropSubscribers.Any(x => x.Item1 == idInstance))
+            callbackDropSubscribers.Remove(callbackDropSubscribers.First(x => x.Item1 == idInstance));
+    }
+
+    #endregion
+
+    #region Events
+    public void saveParent(bool isMother)
+    {
+        DragodindeManager.SaveParent(isMother, DradoDindeToSave, ref saveError, ref cells, ref dragodindesSaved);
+    }
+
+    private async Task CreateCopyOfDiv(string id)
+    {
+        await JSRuntime.InvokeVoidAsync("copyAndEnableDrag", "do-id-" + id);
+    }
+
+    private RenderFragment RenderDragodindeOption(int id) => builder =>
+    {
+        var cell = cells.FirstOrDefault(c => c.CellId == "box" + id);
+        if (cell != null && cell.dragodindeOption != null)
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "id", $"copy-do-id-{cell.dragodindeOption.title}--{Guid.NewGuid().ToString()}");
+            builder.AddAttribute(2, "title", cell.dragodindeOption.title);
+            builder.AddAttribute(3, "ondragstart", "event.dataTransfer.setData('text/plain', event.target.id)");
+            builder.AddAttribute(4, "draggable", "true");
+            builder.AddAttribute(5, "style", $"width: 50px; height: 50px; background: linear-gradient(to bottom, #{cell.dragodindeOption.colorA} 50%, #{cell.dragodindeOption.colorB} 50%);");
+            builder.AddAttribute(6, "clone", "true");
+            builder.AddAttribute(7, "drop-zone", "true");
+            builder.AddAttribute(8, "container-id", "box" + id);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(6, "");
+        }
+    };
+    #endregion
+
+    #region JsInterop
+    [JSInvokable]
+    public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean, string isSaved)
+    {
+        MatchesPossibilities.Clear();
+
+        titleId = titleId.Replace("clone-", "").Replace("do-id-", "").Replace("copy-", "");
+
+        int indexToRemove = titleId.IndexOf("--");
+        if (indexToRemove != -1)
+        {
+            titleId = titleId.Substring(0, indexToRemove);
+        }
+
+        if (isSaved == "true")
+        {
+            // clean tree
+            if (treeCellId == "box29")
+                cells = cells.Where(x => x.CellId != "box29" && x.CellId != "box25" && x.CellId != "box26"
+                && x.CellId != "box17" && x.CellId != "box18" && x.CellId != "box19" && x.CellId != "box20"
+                 && x.CellId != "box1" && x.CellId != "box2" && x.CellId != "box3" && x.CellId != "box4"
+                 && x.CellId != "box5" && x.CellId != "box6" && x.CellId != "box7" && x.CellId != "box8")
+                 .ToList();
+            else if (treeCellId == "box30")
+                cells = cells.Where(x => x.CellId == "box29" || x.CellId == "box25" || x.CellId == "box26"
+                || x.CellId == "box17" || x.CellId == "box18" || x.CellId == "box19" || x.CellId == "box20"
+                 || x.CellId == "box1" || x.CellId == "box2" || x.CellId == "box3" || x.CellId == "box4"
+                 || x.CellId == "box5" || x.CellId == "box6" || x.CellId == "box7" || x.CellId == "box8")
+                 .ToList();
+            else
+                cells.Clear();
+        }
+
+        DragodindeGenealogic.UpdateTree(treeCellId, treeCellIdToClean, titleId, isSaved == "true", ref cells, ref dragodindeoptions, ref dragodindesSaved);
+
+        var resultProba = DragodindeReproduction.UpdateProbabilities(ref dragodindeoptions, FatherPredisp, MotherPredisp, ref cells);
+        if (resultProba != null)
+            MatchesPossibilities.AddRange(resultProba);
+
+        StateHasChanged();
+    }
+
+
+    private async Task SetCookie(string cookieName, string cookieValue)
+    {
+        await JSRuntime.InvokeVoidAsync("cookieHelper2.setCookie", cookieName, cookieValue, 5);
+    }
+
+    private async Task<string> GetCookie(string cookieName)
+    {
+        return await JSRuntime.InvokeAsync<string>("cookieHelper2.getCookie", cookieName);
+    }
+    #endregion
+}
+
+<script>
+    function copyAndEnableDrag(divId) {
+        console.log("divId : " + divId);
+        var originalDiv = document.getElementById(divId);
+        var copiedDiv = originalDiv.cloneNode(true);
+        copiedDiv.id = "copiedDiv";
+        copiedDiv.style.position = "absolute";
+        copiedDiv.style.top = "200px"; // Ajuster la position initiale
+        copiedDiv.style.left = "200px";
+        copiedDiv.setAttribute("draggable", "true");
+        copiedDiv.ondragstart = function(event) {
+            event.dataTransfer.setData("text/plain", event.target.id);
+        };
+        document.body.appendChild(copiedDiv);
+    }
+
+    document.body.ondrop = function(event) {
+        var dropzone = event.target;
+        var id = event.dataTransfer.getData("text");
+        var idInstance = document.getElementById('idInstanceForCallback').value;
+        var idSourceToClean = "";
+        var isSaved = document.getElementById(id).getAttribute("droSaved") === "true" ? "true" : "false";
+        console.log(document.getElementById(id).parentElement);
+        if (dropzone.getAttribute("drop-zone") === "true")
+        {
+            event.preventDefault();
+            var originalDiv = document.getElementById(id);
+            var draggableElement = originalDiv.cloneNode(true);
+
+            if (document.getElementById(id).getAttribute("clone") === "true") {
+                idSourceToClean = document.getElementById(id).getAttribute("container-id");
+
+            }
+
+            if (document.getElementById(event.target.id).getAttribute("clone") === "true") {
+                event.target.id = document.getElementById(event.target.id).getAttribute("container-id");
+            }
+
+                console.log(event.target);
+                console.log('move');
+                console.log('event.target.id : ' + event.target.id);
+                console.log('id : ' + id);
+                console.log('idSourceToClean : ' + idSourceToClean);
+                console.log('isSaved : ' + isSaved);
+                console.log('isClone : ' + document.getElementById(id).getAttribute("clone"));
+            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, event.target.id, id, idSourceToClean, isSaved)
+            .then(datas => {
+                console.log('Fonction C# appelée avec succès');
+            }).catch(error => {
+                console.error("Erreur lors de l'appel de la fonction C#: ", error);
+            });
+        }
+        else if (document.getElementById(id).getAttribute("clone") === "true"){
+
+            idSourceToClean = document.getElementById(id).getAttribute("container-id");
+            console.log(event.target);
+            console.log('event.target.id : ' + event.target.id);
+            console.log('id : ' + id);
+            console.log('idSourceToClean : ' + idSourceToClean);
+                console.log('isSaved : ' + isSaved);
+
+
+            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, null, id, idSourceToClean, isSaved)
+            .then(datas => {
+                console.log('Fonction C# appelée avec succès');
+            }).catch(error => {
+                console.error("Erreur lors de l'appel de la fonction C#: ", error);
+            });
+        }
+        else {
+            console.log("not dropable");
+        }
+    };
+
+    document.body.ondragover = function(event) {
+        event.preventDefault();
+    };
+</script>
+
+
+<script>
+    window.cookieHelper2 = {
+        setCookie: function (name, value, days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        },
+        getCookie: function (name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        },
+        notifyConnected: function () {
+            var event = new CustomEvent('connected');
+            window.dispatchEvent(event);
+        }
+    };
+
+    Blazor.start().then(() => {
+        window.cookieHelper.notifyConnected();
+    });
+</script>
+
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 1200px;
+    }
+
+    .level {
+        display: flex;
+        justify-content: space-evenly;
+        margin: 20px 0;
+        width: 100%;
+        position: relative;
+    }
+
+    .box {
+        width: 54px;
+        height: 54px;
+        border: 2px solid darkolivegreen;
+        background-color: #E0F7FA;
+        text-align: center;
+        line-height: 60px;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: #00BFFF;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .line {
+        position: absolute;
+        border-left: 2px solid #00BFFF;
+    }
+
+    .vertical-line {
+        height: 100px;
+        border-left: 2px solid darkolivegreen;
+        position: absolute;
+        top: 0;
+    }
+</style>
+
+<style>
+    .filter-container {
+        display: flex;
+    }
+
+    .filter-container-left, .filter-container-right {
+        width: calc(50vw - 130px);
+        margin-right: 10px;
+    }
+
+    .form-container {
+        margin-top: 20px
+    }
+
+    .save-container {
+        margin-top: 100px;
+        padding: 20px;
+        border: 2px solid cadetblue;
+        border-radius: 5px;
+    }
+
+    .possibilities-container {
+        margin-top: 50px;
+    }
+</style>

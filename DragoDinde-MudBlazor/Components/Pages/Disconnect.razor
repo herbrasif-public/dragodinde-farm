@@ -1,0 +1,17 @@
+﻿@page "/Disconnect"
+@using System.ComponentModel.DataAnnotations
+@using DragoDinde_MudBlazor.Repositories
+@inject NavigationManager Navigation
+@inject UserRepository UserRepository
+
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        UserRepository.CurrentUser = null;
+        if (UserRepository.refreshNavMenu != null)
+            UserRepository.refreshNavMenu();
+        Navigation.NavigateTo("/");
+    }
+}
