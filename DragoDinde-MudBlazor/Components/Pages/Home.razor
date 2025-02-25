@@ -52,6 +52,7 @@
             @* <div id="do-id-@dragodindeoption.title" onmousedown="copyAndEnableDrag('do-id-@dragodindeoption.title')" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div> *@
             <div id="do-id-@dragodindeoption.title"
                  title="@dragodindeoption.title"
+                 droSaved="false"
                  ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
                  draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
 
@@ -72,6 +73,7 @@
                     <p>@dragodindeoption.droName</p>
                     <div id="do-id-@dragodindeoption.droSaved.title"
                          title="@dragodindeoption.droSaved.title"
+                         droSaved="true"
                          ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
                          draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
                 </div>
@@ -91,10 +93,54 @@
 
 <div class="container">
     <div class="level">
-        <div class="box" id="box1" drop-zone="true"></div><div class="box" id="box2" drop-zone="true"></div><div class="box" id="box3" drop-zone="true"></div><div class="box" id="box4" drop-zone="true"></div>
-        <div class="box" id="box5" drop-zone="true"></div><div class="box" id="box6" drop-zone="true"></div><div class="box" id="box7" drop-zone="true"></div><div class="box" id="box8" drop-zone="true"></div>
-        <div class="box" id="box9" drop-zone="true"></div><div class="box" id="box10" drop-zone="true"></div><div class="box" id="box11" drop-zone="true"></div><div class="box" id="box12" drop-zone="true"></div>
-        <div class="box" id="box13" drop-zone="true"></div><div class="box" id="box14" drop-zone="true"></div><div class="box" id="box15" drop-zone="true"></div><div class="box" id="box16" drop-zone="true"></div>
+        <div class="box" id="box1" drop-zone="true">
+            @RenderDragodindeOption(1)
+        </div>
+        <div class="box" id="box2" drop-zone="true">
+            @RenderDragodindeOption(2)
+        </div>
+        <div class="box" id="box3" drop-zone="true">
+            @RenderDragodindeOption(3)
+        </div>
+        <div class="box" id="box4" drop-zone="true">
+            @RenderDragodindeOption(4)
+        </div>
+        <div class="box" id="box5" drop-zone="true">
+            @RenderDragodindeOption(5)
+        </div>
+        <div class="box" id="box6" drop-zone="true">
+            @RenderDragodindeOption(6)
+        </div>
+        <div class="box" id="box7" drop-zone="true">
+            @RenderDragodindeOption(7)
+        </div>
+        <div class="box" id="box8" drop-zone="true">
+            @RenderDragodindeOption(8)
+        </div>
+        <div class="box" id="box9" drop-zone="true">
+            @RenderDragodindeOption(9)
+        </div>
+        <div class="box" id="box10" drop-zone="true">
+            @RenderDragodindeOption(10)
+        </div>
+        <div class="box" id="box11" drop-zone="true">
+            @RenderDragodindeOption(11)
+        </div>
+        <div class="box" id="box12" drop-zone="true">
+            @RenderDragodindeOption(12)
+        </div>
+        <div class="box" id="box13" drop-zone="true">
+            @RenderDragodindeOption(13)
+        </div>
+        <div class="box" id="box14" drop-zone="true">
+            @RenderDragodindeOption(14)
+        </div>
+        <div class="box" id="box15" drop-zone="true">
+            @RenderDragodindeOption(15)
+        </div>
+        <div class="box" id="box16" drop-zone="true">
+            @RenderDragodindeOption(16)
+        </div>
         <div class="vertical-line" style="left: 50%;"></div>
     </div>
     <div class="line" style="left: 6.25%;"></div>
@@ -106,20 +152,58 @@
     <div class="line" style="left: 81.25%;"></div>
     <div class="line" style="left: 93.75%;"></div>
     <div class="level">
-        <div class="box" id="box17" drop-zone="true" style="margin-left: -20px;"></div><div class="box" id="box18" drop-zone="true"></div><div class="box" id="box19" drop-zone="true"></div><div class="box" id="box20" drop-zone="true"></div>
-        <div class="box" id="box21" drop-zone="true"></div><div class="box" id="box22" drop-zone="true"></div><div class="box" id="box23" drop-zone="true"></div><div class="box" id="box24" drop-zone="true" style="margin-right: -20px;"></div>
+        <div class="box" id="box17" drop-zone="true" style="margin-left: -20px;">
+            @RenderDragodindeOption(17)
+        </div>
+        <div class="box" id="box18" drop-zone="true">
+            @RenderDragodindeOption(18)
+        </div>
+        <div class="box" id="box19" drop-zone="true">
+            @RenderDragodindeOption(19)
+        </div>
+        <div class="box" id="box20" drop-zone="true">
+            @RenderDragodindeOption(20)
+        </div>
+        <div class="box" id="box21" drop-zone="true">
+            @RenderDragodindeOption(21)
+        </div>
+        <div class="box" id="box22" drop-zone="true">
+            @RenderDragodindeOption(22)
+        </div>
+        <div class="box" id="box23" drop-zone="true">
+            @RenderDragodindeOption(23)
+        </div>
+        <div class="box" id="box24" drop-zone="true" style="margin-right: -20px;">
+            @RenderDragodindeOption(24)
+        </div>
         <div class="vertical-line" style="left: 50%;"></div>
     </div>
     <div class="line" style="left: 24%;"></div>
     <div class="line" style="left: 75%;"></div>
     <div class="level">
-        <div class="box" id="box25" drop-zone="true" style="margin-left: -50px;"></div><div class="box" id="box26" drop-zone="true"></div><div class="box" id="box27" drop-zone="true"></div><div class="box" id="box28" drop-zone="true" style="margin-right: -50px;"></div>
+        <div class="box" id="box25" drop-zone="true" style="margin-left: -50px;">
+            @RenderDragodindeOption(25)
+        </div>
+        <div class="box" id="box26" drop-zone="true">
+            @RenderDragodindeOption(26)
+        </div>
+        <div class="box" id="box27" drop-zone="true">
+            @RenderDragodindeOption(27)
+        </div>
+        <div class="box" id="box28" drop-zone="true" style="margin-right: -50px;">
+            @RenderDragodindeOption(28)
+        </div>
         <div class="vertical-line" style="left: 50%;"></div>
     </div>
     <div class="line" style="left: 25%;"></div>
     <div class="line" style="left: 75%;"></div>
     <div class="level">
-        <div class="box" id="box29" drop-zone="true" style="margin-left: -150px;"></div><div class="box" id="box30" drop-zone="true" style="margin-right: -150px;"></div>
+        <div class="box" id="box29" drop-zone="true" style="margin-left: -150px;">
+            @RenderDragodindeOption(29)
+        </div>
+        <div class="box" id="box30" drop-zone="true" style="margin-right: -150px;">
+            @RenderDragodindeOption(30)
+        </div>
         <div class="vertical-line" style="left: 50%;"></div>
     </div>
     <div class="line" style="left: 50%;"></div>
@@ -156,16 +240,16 @@
 @code {
 
     #region Global Callback
-    delegate void DelegCallbackDrop(string treeCellId, string titleId, string treeCellIdToClean);
+    delegate void DelegCallbackDrop(string treeCellId, string titleId, string treeCellIdToClean, string isSaved);
 
     static List<(Guid, DelegCallbackDrop)> callbackDropSubscribers = new List<(Guid, DelegCallbackDrop)>();
 
     [JSInvokable]
-    public static void CallbackDrop(string Guid, string treeCellId, string titleId, string treeCellIdToClean)
+    public static void CallbackDrop(string Guid, string treeCellId, string titleId, string treeCellIdToClean, string isSaved)
     {
         var cbToUse = callbackDropSubscribers.FirstOrDefault(x => x.Item1.ToString() == Guid);
         if (cbToUse != default((Guid, DelegCallbackDrop)))
-            cbToUse.Item2(treeCellId, titleId, treeCellIdToClean);
+            cbToUse.Item2(treeCellId, titleId, treeCellIdToClean, isSaved);
         else
             Console.WriteLine("No callback found for guid : " + Guid);
     }
@@ -199,6 +283,7 @@
     #endregion
 
     #region Lifecycle events
+
 
     protected override void OnInitialized()
     {
@@ -276,15 +361,40 @@
     {
         await JSRuntime.InvokeVoidAsync("copyAndEnableDrag", "do-id-" + id);
     }
+
+    private RenderFragment RenderDragodindeOption(int id) => builder =>
+    {
+        var cell = cells.FirstOrDefault(c => c.CellId == "box" + id);
+        if (cell != null && cell.dragodindeOption != null)
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "id", $"copy-do-id-{cell.dragodindeOption.title}");
+            builder.AddAttribute(2, "title", cell.dragodindeOption.title);
+            builder.AddAttribute(3, "ondragstart", "event.dataTransfer.setData('text/plain', event.target.id)");
+            builder.AddAttribute(4, "draggable", "true");
+            builder.AddAttribute(5, "style", $"width: 50px; height: 50px; background: linear-gradient(to bottom, #{cell.dragodindeOption.colorA} 50%, #{cell.dragodindeOption.colorB} 50%);");
+            builder.AddAttribute(6, "clone", "true");
+            builder.AddAttribute(7, "drop-zone", "true");
+            builder.AddAttribute(8, "container-id", "box" + id);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(6, "");
+        }
+    };
     #endregion
 
     #region JsInterop
     [JSInvokable]
-    public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean)
+    public void CallbackDropToSubscribe(string treeCellId, string titleId, string treeCellIdToClean, string isSaved)
     {
         MatchesPossibilities.Clear();
         titleId = titleId.Replace("clone-", "").Replace("do-id-", "");
 
+        DragodindeGenealogic.UpdateTree(treeCellId, treeCellIdToClean, titleId, isSaved == "true", ref cells, ref dragodindeoptions, ref dragodindesSaved);
+@* 
+        #region UpdateTree
         if (treeCellId == null)
         {
             var dtcToRemove = cells.FirstOrDefault(x => x.dragodindeOption?.title == titleId);
@@ -311,6 +421,7 @@
             if (dtcToRemove != null)
                 cells.Remove(dtcToRemove);
         }
+        #endregion *@
 
         var resultProba = DragodindeReproduction.UpdateProbabilities(ref dragodindeoptions, FatherPredisp, MotherPredisp, ref cells);
         if (resultProba != null)
@@ -353,28 +464,28 @@
         var id = event.dataTransfer.getData("text");
         var idInstance = document.getElementById('idInstanceForCallback').value;
         var idSourceToClean = "";
+        var isSaved = document.getElementById(id).getAttribute("droSaved") === "true" ? "true" : "false";
         console.log(document.getElementById(id).parentElement);
         if (dropzone.getAttribute("drop-zone") === "true")
         {
             event.preventDefault();
             var originalDiv = document.getElementById(id);
             var draggableElement = originalDiv.cloneNode(true);
-            dropzone.appendChild(draggableElement);
-            draggableElement.style.position = "relative";
-            draggableElement.style.top = "0px";
-            draggableElement.style.left = "0px";
-            draggableElement.setAttribute("id", "clone-" + id);
-            draggableElement.setAttribute("clone", "true");
 
             if (document.getElementById(id).getAttribute("clone") === "true") {
-                idSourceToClean = document.getElementById(id).parentElement.id;
-                document.getElementById(id).remove();
+                idSourceToClean = document.getElementById(event.target.id).getAttribute("container-id");
+                
+            }
+
+            if (document.getElementById(event.target.id).getAttribute("clone") === "true") {
+                event.target.id = document.getElementById(event.target.id).getAttribute("container-id");
             }
 
                 console.log(event.target);
                 console.log('event.target.id : ' + event.target.id);
                 console.log('id : ' + id);
-            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, event.target.id, id, idSourceToClean)
+                console.log('idSourceToClean : ' + idSourceToClean);
+            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, event.target.id, id, idSourceToClean, isSaved)
             .then(datas => {
                 console.log('Fonction C# appelée avec succès');
             }).catch(error => {
@@ -383,11 +494,14 @@
         }
         else if (document.getElementById(id).getAttribute("clone") === "true"){
 
-            console.log("remove drag");
-            document.getElementById(id).remove();
+            idSourceToClean = document.getElementById(id).getAttribute("container-id");
+            console.log(event.target);
+            console.log('event.target.id : ' + event.target.id);
+            console.log('id : ' + id);
+            console.log('idSourceToClean : ' + idSourceToClean);
 
 
-            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, null, id, idSourceToClean)
+            DotNet.invokeMethodAsync('DragoDinde_MudBlazor', 'CallbackDrop', idInstance, null, id, idSourceToClean, isSaved)
             .then(datas => {
                 console.log('Fonction C# appelée avec succès');
             }).catch(error => {
@@ -398,8 +512,6 @@
             console.log("not dropable");
         }
     };
-
-
 
     document.body.ondragover = function(event) {
         event.preventDefault();
