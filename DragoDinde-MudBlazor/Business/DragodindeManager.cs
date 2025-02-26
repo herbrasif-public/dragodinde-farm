@@ -1,6 +1,7 @@
 using DragoDinde_MudBlazor.Repositories;
 using DragoDinde_MudBlazor.Models;
 using System.Runtime.InteropServices.Marshalling;
+using System.Text.RegularExpressions;
 
 namespace DragoDinde_MudBlazor.Business
 {
@@ -24,7 +25,7 @@ namespace DragoDinde_MudBlazor.Business
             var dragodindes = this.dragodindeRepository.LoadDragodinde(userName);
             foreach (var dro in dragodindes)
             {
-                result.Add(new (Guid.NewGuid().ToString(), dro.Name, ReconstructCreatureFromGeneticCode(dro.GeneticCode, ref dragodindeOptions)));
+                result.Add(new (Guid.NewGuid().ToString(), dro.Name, ReconstructGeneticCode(dro.GeneticCode, ref dragodindeOptions)));
             }
             return result;
         }
@@ -57,6 +58,11 @@ namespace DragoDinde_MudBlazor.Business
             }
         }
 
+        public void DeleteDroSaved(string name)
+        {
+            this.dragodindeRepository.DeleteDradoginde(name, this.userRepository.CurrentUser);
+        }
+
         public string GenerateGeneticCode(DragodindeOption dro, string posTree = "")
         {
             string result = "";
@@ -71,15 +77,47 @@ namespace DragoDinde_MudBlazor.Business
         }
 
 
-        private DragodindeOption ReconstructCreatureFromGeneticCode(string geneticCode, ref List<DragodindeOption> dragodindeOptions)
+        public DragodindeOption ReconstructGeneticCode(string geneticCode, ref List<DragodindeOption> dragodindeOptions, string posGenealogic = "") //in-progress
         {
-            if (string.IsNullOrEmpty(geneticCode) || dragodindeOptions == null || dragodindeOptions.Count == 0)
-                return null;
-
-            return ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions);
+            DragodindeOption dro = null;
+            Regex regex = new Regex(@"^\d+");
+            Match match = regex.Match(geneticCode);
+            if (match.Success)
+            {
+                string idNumber = match.Value;
+                int id = int.Parse(idNumber);
+                geneticCode = geneticCode.Substring(idNumber.Length);
+                dro = dragodindeOptions.FirstOrDefault(x => x.Id == id).Clone() as DragodindeOption;
+                dro.GeneticCode = geneticCode;
+                Regex regexFindFather = new Regex(@$"({posGenealogic}[P]+)\d");
+                Match matchFindFather = regexFindFather.Match(geneticCode);
+                if (matchFindFather.Success)
+                {
+                    string newPosGenealogic = matchFindFather.Groups[1].Value;
+                    int position = matchFindFather.Index;
+                    string geneticCodeFather = geneticCode.Substring(position + newPosGenealogic.Length);
+                    dro.FatherSaved = ReconstructGeneticCode(geneticCodeFather, ref dragodindeOptions, newPosGenealogic);
+                }
+                Regex regexFindMother = new Regex(@$"({posGenealogic}[M]+)\d");
+                Match matchFindMother = regexFindMother.Match(geneticCode);
+                if (matchFindMother.Success)
+                {
+                    string newPosGenealogic = matchFindMother.Groups[1].Value;
+                    int position = matchFindMother.Index;
+                    string geneticCodeMother = geneticCode.Substring(position + newPosGenealogic.Length);
+                    dro.MotherSaved = ReconstructGeneticCode(geneticCodeMother, ref dragodindeOptions, newPosGenealogic);
+                }
+            }
+            return dro;
         }
 
-        private DragodindeOption ReconstructCreatureFromGeneticCodeRecursively(string geneticCode, ref List<DragodindeOption> dragodindeOptions, int pos = 0, DragodindeOption previousCreature = null)
+        public DragodindeOption ReconstructCreatureFromGeneticCode(string geneticCode, List<DragodindeOption> dragodindeOptions)
+        {
+            int pos = 0;
+            return ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions, ref pos);
+        }
+
+        private DragodindeOption ReconstructCreatureFromGeneticCodeRecursively(string geneticCode, ref List<DragodindeOption> dragodindeOptions, ref int pos)
         {
             if (pos >= geneticCode.Length)
                 return null;
@@ -90,40 +128,40 @@ namespace DragoDinde_MudBlazor.Business
                 currentIdstring += geneticCode[pos];
                 pos++;
             }
+
             DragodindeOption currentCreature = null;
-            if (!String.IsNullOrWhiteSpace(currentIdstring))
+            if (!string.IsNullOrWhiteSpace(currentIdstring))
             {
                 int currentId = int.Parse(currentIdstring);
 
                 if (!dragodindeOptions.Any(o => o.Id == currentId))
                     return null;
 
-                currentCreature = dragodindeOptions.FirstOrDefault(dro => dro.Id == currentId);
+                currentCreature = dragodindeOptions.FirstOrDefault(dro => dro.Id == currentId).Clone() as DragodindeOption;
 
                 if (currentCreature == null)
                 {
                     return currentCreature;
                 }
             }
-            else
-            {
-                currentCreature = previousCreature;
-            }
 
-            if (pos < geneticCode.Length && geneticCode[pos] == 'P')
+            while (pos < geneticCode.Length && (geneticCode[pos] == 'P' || geneticCode[pos] == 'M'))
             {
-                pos++;
-                currentCreature.FatherSaved = ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions, pos, currentCreature);
-            }
-
-            if (pos < geneticCode.Length && geneticCode[pos] == 'M')
-            {
-                pos++;
-                currentCreature.MotherSaved = ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions, pos, currentCreature);
+                if (geneticCode[pos] == 'P')
+                {
+                    pos++;
+                    currentCreature.FatherSaved = ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions, ref pos);
+                }
+                else if (geneticCode[pos] == 'M')
+                {
+                    pos++;
+                    currentCreature.MotherSaved = ReconstructCreatureFromGeneticCodeRecursively(geneticCode, ref dragodindeOptions, ref pos);
+                }
             }
 
             return currentCreature;
         }
+
 
         public DragodindeOption FillParentsSaved(DragodindeOption dro, int? cellPos, ref List<DragodindeTreeCell> cells)
         {

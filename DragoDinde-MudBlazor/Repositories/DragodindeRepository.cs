@@ -25,7 +25,18 @@ IF NOT EXISTS (SELECT 1 FROM Dradogindes WHERE Name = @Name AND Username = @User
 BEGIN
     INSERT INTO Dradogindes (Name, GeneticCode, Username)
     VALUES (@Name, @GeneticCode, @Username);
-END", connection);
+END
+ELSE
+BEGIN
+    UPDATE Dradogindes
+    SET
+        Name = @Name,
+        GeneticCode = @GeneticCode
+    WHERE Username = @Username
+        AND Name = @Name
+END
+
+", connection);
                 command.Parameters.AddWithValue("@Name", name);
                 command.Parameters.AddWithValue("@GeneticCode", geneticCode);
                 command.Parameters.AddWithValue("@Username", username);
@@ -50,6 +61,22 @@ END", connection);
                 }
             }
             return result;
+        }
+
+        public void DeleteDradoginde(string name, string username)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var command = new SqlCommand(@"
+                    DELETE FROM Dradogindes
+                    WHERE Username = @Username
+                        AND Name = @Name
+", connection);
+                command.Parameters.AddWithValue("@Name", name);
+                command.Parameters.AddWithValue("@Username", username);
+                command.ExecuteNonQuery();
+            }
         }
     }
 

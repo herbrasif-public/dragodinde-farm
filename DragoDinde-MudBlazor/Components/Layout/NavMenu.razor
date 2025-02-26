@@ -3,21 +3,15 @@
 
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    @if (String.IsNullOrWhiteSpace(UserRepository.CurrentUser))
-    {
-        <MudNavLink Href="login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Login</MudNavLink>
-    }
-    else
-    {
-        <MudNavLink Href="farm" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Farm</MudNavLink>
-        <MudNavLink Href="disconnect" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Disconnect</MudNavLink>
-    }
+    <MudNavLink Href="login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Login</MudNavLink>
+    <MudNavLink Href="farm" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Farm</MudNavLink>
 
 </MudNavMenu>
 
 @code {
 
-    public void _refreshNavMenu() {
+    public void _refreshNavMenu()
+    {
         StateHasChanged();
     }
 

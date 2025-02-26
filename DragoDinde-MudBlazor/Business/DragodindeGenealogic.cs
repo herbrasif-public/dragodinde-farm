@@ -132,6 +132,11 @@ namespace DragoDinde_MudBlazor.Business
             }
         }
 
+        public void UpdateTree((string id, string droName, DragodindeOption droSaved) dragodindeSaved, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions, ref List<(string index, string droName, DragodindeOption droSaved)> savedDradogindes)
+        {
+            UpdateTree("box29", null, dragodindeSaved.id, true, ref cells, ref dragodindeoptions, ref savedDradogindes);
+        }
+
         public void UpdateTree(string treeCellId, string treeCellIdToClean, string titleId, bool isSaved, ref List<DragodindeTreeCell> cells, ref List<DragodindeOption> dragodindeoptions, ref List<(string index, string droName, DragodindeOption droSaved)> savedDradogindes)
         {
 

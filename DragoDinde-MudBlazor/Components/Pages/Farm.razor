@@ -1,13 +1,270 @@
 ﻿@page "/Farm"
+@using DragoDinde_MudBlazor.Repositories
+@using DragoDinde_MudBlazor.Models
+@using DragoDinde_MudBlazor.Business
+@using MudBlazor
+@using System.Text
+@inject IJSRuntime JSRuntime
+@inject DragodindeRepository DragodindeRepository
+@inject UserRepository UserRepository
+@inject DragodindeGenealogic DragodindeGenealogic
+@inject DragodindeReproduction DragodindeReproduction
+@inject StringComparerCustom StringComparerCustom
+@inject DragodindeManager DragodindeManager
+@inject NavigationManager Navigation
+
 
 <PageTitle>Farm</PageTitle>
 
+<div class="form-container">
+    <h2>Dragodindes sauvegardées :</h2>
+
+    <div style="display: flex;
+				flex-wrap: wrap;
+				gap: 10px;">
+        @foreach (var dragodindeoption in dragodindesSaved)
+        {
+            <div id="do-id-@dragodindeoption.id"
+            title="@dragodindeoption.droName"
+            droSaved="true"
+            @onclick="() => VisualiseDro(dragodindeoption.id)"
+            ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
+            draggable="true" style="width: 35px;height: 35px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
+
+        }
+    </div>
+</div>
+
+<h2>Visualisation</h2>
+<div class="container">
+    <div class="level">
+        <div class="box" id="box1" drop-zone="true">
+            @RenderDragodindeOption(1)
+        </div>
+        <div class="box" id="box2" drop-zone="true">
+            @RenderDragodindeOption(2)
+        </div>
+        <div class="box" id="box3" drop-zone="true">
+            @RenderDragodindeOption(3)
+        </div>
+        <div class="box" id="box4" drop-zone="true">
+            @RenderDragodindeOption(4)
+        </div>
+        <div class="box" id="box5" drop-zone="true">
+            @RenderDragodindeOption(5)
+        </div>
+        <div class="box" id="box6" drop-zone="true">
+            @RenderDragodindeOption(6)
+        </div>
+        <div class="box" id="box7" drop-zone="true">
+            @RenderDragodindeOption(7)
+        </div>
+        <div class="box" id="box8" drop-zone="true">
+            @RenderDragodindeOption(8)
+        </div>
+        <div class="box" id="box9" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(9)
+        </div>
+        <div class="box" id="box10" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(10)
+        </div>
+        <div class="box" id="box11" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(11)
+        </div>
+        <div class="box" id="box12" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(12)
+        </div>
+        <div class="box" id="box13" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(13)
+        </div>
+        <div class="box" id="box14" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(14)
+        </div>
+        <div class="box" id="box15" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(15)
+        </div>
+        <div class="box" id="box16" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(16)
+        </div>
+    </div>
+    <div class="line" style="left: 6.25%;"></div>
+    <div class="line" style="left: 18.75%;"></div>
+    <div class="line" style="left: 31.25%;"></div>
+    <div class="line" style="left: 43.75%;"></div>
+    <div class="line" style="left: 56.25%;"></div>
+    <div class="line" style="left: 68.75%;"></div>
+    <div class="line" style="left: 81.25%;"></div>
+    <div class="line" style="left: 93.75%;"></div>
+    <div class="level">
+        <div class="box" id="box17" drop-zone="true" style="margin-left: -20px;">
+            @RenderDragodindeOption(17)
+        </div>
+        <div class="box" id="box18" drop-zone="true">
+            @RenderDragodindeOption(18)
+        </div>
+        <div class="box" id="box19" drop-zone="true">
+            @RenderDragodindeOption(19)
+        </div>
+        <div class="box" id="box20" drop-zone="true">
+            @RenderDragodindeOption(20)
+        </div>
+        <div class="box" id="box21" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(21)
+        </div>
+        <div class="box" id="box22" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(22)
+        </div>
+        <div class="box" id="box23" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(23)
+        </div>
+        <div class="box" id="box24" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(24)
+        </div>
+    </div>
+    <div class="line" style="left: 24%;"></div>
+    <div class="line" style="left: 75%;"></div>
+    <div class="level">
+        <div class="box" id="box25" drop-zone="true" style="margin-left: -50px;">
+            @RenderDragodindeOption(25)
+        </div>
+        <div class="box" id="box26" drop-zone="true">
+            @RenderDragodindeOption(26)
+        </div>
+        <div class="box" id="box27" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(27)
+        </div>
+        <div class="box" id="box28" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(28)
+        </div>
+    </div>
+    <div class="line" style="left: 25%;"></div>
+    <div class="line" style="left: 75%;"></div>
+    <div class="level">
+        <div class="box" id="box29" drop-zone="true">
+            @RenderDragodindeOption(29)
+        </div>
+        <div class="box" id="box30" drop-zone="true" style="display:none">
+            @RenderDragodindeOption(30)
+        </div>
+    </div>
+    <div class="line" style="left: 50%;"></div>
+    <div class="level" style="display: none;">
+        <div class="box" id="box31"></div>
+    </div>
+</div>
+
 
 @code {
+
+    private List<(string id, string droName, DragodindeOption droSaved)> dragodindesSaved = new List<(string id, string droName, DragodindeOption droSaved)>();
+    public List<DragodindeTreeCell> cells = new List<DragodindeTreeCell>();
+    private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
     private int currentCount = 0;
 
     private void IncrementCount()
     {
         currentCount++;
     }
+
+    private void VisualiseDro(string id)
+    {
+        var dro = dragodindesSaved.FirstOrDefault(x => x.id == id);
+        DragodindeGenealogic.UpdateTree(dro, ref cells, ref dragodindeoptions, ref dragodindesSaved);
+        StateHasChanged();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(100);
+        }
+        await ActionAfterLoaded();
+    }
+
+    public async Task ActionAfterLoaded()
+    {
+        bool action = false;
+
+        if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser) && dragodindesSaved.Count() == 0)
+        {
+            var droSaved = DragodindeManager.LoadDradogindes(UserRepository.CurrentUser, ref dragodindeoptions);
+            if (droSaved != null)
+            {
+                dragodindesSaved.AddRange(droSaved);
+                action = true;
+            }
+        }
+
+        if (action)
+            StateHasChanged();
+    }  
+
+    protected override void OnInitialized()
+    {
+        dragodindeoptions.AddRange(DragodindeOption.GenerateList());
+    }
+
+
+    private RenderFragment RenderDragodindeOption(int id) => builder =>
+    {
+        var cell = cells.FirstOrDefault(c => c.CellId == "box" + id);
+        if (cell != null && cell.dragodindeOption != null)
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "id", $"copy-do-id-{cell.dragodindeOption.title}--{Guid.NewGuid().ToString()}");
+            builder.AddAttribute(2, "title", cell.dragodindeOption.title);
+            builder.AddAttribute(3, "style", $"width: 35px; height: 35px; background: linear-gradient(to bottom, #{cell.dragodindeOption.colorA} 50%, #{cell.dragodindeOption.colorB} 50%);");
+            builder.AddAttribute(4, "container-id", "box" + id);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(6, "");
+        }
+    };
 }
+
+
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 1200px;
+    }
+
+    .level {
+        display: flex;
+        justify-content: space-evenly;
+        margin: 20px 0;
+        width: 100%;
+        position: relative;
+    }
+
+    .box {
+        width: 39px;
+        height: 39px;
+        border: 2px solid darkolivegreen;
+        background-color: transparent;
+        text-align: center;
+        line-height: 60px;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: #00BFFF;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .line {
+        position: absolute;
+        border-left: 2px solid #00BFFF;
+    }
+
+    .vertical-line {
+        height: 100px;
+        border-left: 2px solid darkolivegreen;
+        position: absolute;
+        top: 0;
+    }
+</style>
+
