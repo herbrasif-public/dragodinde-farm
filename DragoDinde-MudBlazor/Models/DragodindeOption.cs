@@ -20,6 +20,7 @@ namespace DragoDinde_MudBlazor.Models
 
 
         public string Selector { get; set; } = "zone1";
+        public string GeneticCode { get; set; }
 
         public object Clone()
         {
@@ -34,6 +35,7 @@ namespace DragoDinde_MudBlazor.Models
             clone.ls = this.ls;
             clone.gsw = this.gsw;
             clone.Selector = this.Selector;
+            clone.GeneticCode = this.GeneticCode;
             clone.FatherSaved = this.FatherSaved;
             clone.MotherSaved = this.MotherSaved;
 

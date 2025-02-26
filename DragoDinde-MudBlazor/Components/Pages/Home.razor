@@ -15,6 +15,7 @@
 @implements IDisposable
 
 <PageTitle>Home</PageTitle>
+<h1>Bonjour @UserRepository.CurrentUser</h1>
 
 <input type="hidden" id="idInstanceForCallback" value="@idInstance" />
 
@@ -44,9 +45,7 @@
 <div class="form-container">
     <h2>Possiblitées :</h2>
 
-    <div id="do-list" style="display: flex;
-				flex-wrap: wrap;
-				gap: 10px;">
+    <div id="do-list" style="display: flex;flex-wrap: wrap;gap: 10px;">
         @foreach (var dragodindeoption in dragodindeoptionsToDisplay)
         {
             @* <div id="do-id-@dragodindeoption.title" onmousedown="copyAndEnableDrag('do-id-@dragodindeoption.title')" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div> *@
@@ -54,7 +53,7 @@
                  title="@dragodindeoption.title"
                  droSaved="false"
                  ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
-                 draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
+                 draggable="true" style="width: 35px;height: 35px;background: linear-gradient(to bottom, #@dragodindeoption.colorA 50%, #@dragodindeoption.colorB 50%);"></div>
 
         }
 
@@ -75,7 +74,7 @@
                      title="@dragodindeoption.droName"
                      droSaved="true"
                      ondragstart="event.dataTransfer.setData('text/plain', event.target.id)"
-                     draggable="true" style="width: 50px;height: 50px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
+                     draggable="true" style="width: 35px;height: 35px;background: linear-gradient(to bottom, #@dragodindeoption.droSaved.colorA 50%, #@dragodindeoption.droSaved.colorB 50%);"></div>
 
             }
         </div>
@@ -230,6 +229,15 @@
         <MudButton Variant="Variant.Filled" Onclick="() => saveParent(false)">Sauvegarder la mère</MudButton>
         <MudButton Variant="Variant.Filled" OnClick="() => saveParent(true)">Sauvegarder le père</MudButton>
 
+        <MudDivider Style="margin-top: 20px;margin-bottom: 20px;" />
+
+        <MudSelect T="string" @bind-Value="selectedDroToDelete">
+            @foreach (var dro in dragodindesSaved)
+            {
+                <MudSelectItem Value="dro.id">@dro.droName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" OnClick="() => deleteDroSaved()">Supprimer une drago</MudButton>
         <p>@saveError</p>
     }
     else
@@ -237,6 +245,8 @@
         <p>Vous devez être connecté pour sauvegarder !</p>
     }
 </div>
+
+
 @code {
 
     #region Global Callback
@@ -269,6 +279,11 @@
     private IList<DragodindeColor> colors;
     private int selectedColor = 0;
     private List<DragodindeOption> dragodindeoptions = new List<DragodindeOption>();
+    private bool isContextMenuOpen = false;
+    private int contextMenuX;
+    private int contextMenuY;
+    private string contextMenuStyle = "";
+    private string selectedDroToDelete = "";
     private IList<DragodindeOption> dragodindeoptionsToDisplay
     {
         get
@@ -312,14 +327,6 @@
     {
         bool action = false;
 
-        // if (String.IsNullOrWhiteSpace(UserRepository.CurrentUser)) // ça marche pas T_T
-        // {
-        //     string token = await GetCookie("sessionToken");
-        //     if (!String.IsNullOrWhiteSpace(token))
-        //         UserRepository.ValidateAndUpdateToken(token);
-        //     action = true;
-        // }
-
         if (!String.IsNullOrWhiteSpace(UserRepository.CurrentUser) && dragodindesSaved.Count() == 0)
         {
             var droSaved = DragodindeManager.LoadDradogindes(UserRepository.CurrentUser, ref dragodindeoptions);
@@ -357,6 +364,18 @@
         DragodindeManager.SaveParent(isMother, DradoDindeToSave, ref saveError, ref cells, ref dragodindesSaved);
     }
 
+    public void deleteDroSaved()
+    {
+        var dro = dragodindesSaved.FirstOrDefault(dro => dro.id == selectedDroToDelete);
+
+        if (dro != default)
+        {
+            DragodindeManager.DeleteDroSaved(dro.droName);
+            dragodindesSaved.Remove(dro);
+        }
+        selectedDroToDelete = "";
+    }
+
     private async Task CreateCopyOfDiv(string id)
     {
         await JSRuntime.InvokeVoidAsync("copyAndEnableDrag", "do-id-" + id);
@@ -372,7 +391,7 @@
             builder.AddAttribute(2, "title", cell.dragodindeOption.title);
             builder.AddAttribute(3, "ondragstart", "event.dataTransfer.setData('text/plain', event.target.id)");
             builder.AddAttribute(4, "draggable", "true");
-            builder.AddAttribute(5, "style", $"width: 50px; height: 50px; background: linear-gradient(to bottom, #{cell.dragodindeOption.colorA} 50%, #{cell.dragodindeOption.colorB} 50%);");
+            builder.AddAttribute(5, "style", $"width: 35px; height: 35px; background: linear-gradient(to bottom, #{cell.dragodindeOption.colorA} 50%, #{cell.dragodindeOption.colorB} 50%);");
             builder.AddAttribute(6, "clone", "true");
             builder.AddAttribute(7, "drop-zone", "true");
             builder.AddAttribute(8, "container-id", "box" + id);
@@ -383,6 +402,19 @@
             builder.AddContent(6, "");
         }
     };
+
+    private void ShowContextMenu(MouseEventArgs e)
+    {
+        contextMenuX = (int)e.ClientX;
+        contextMenuY = (int)e.ClientY;
+        isContextMenuOpen = true;
+    }
+
+    private void MenuItemClick()
+    {
+        isContextMenuOpen = false;
+        // Ajoutez ici le code pour gérer les clics sur les éléments du menu
+    }
     #endregion
 
     #region JsInterop
@@ -569,10 +601,10 @@
     }
 
     .box {
-        width: 54px;
-        height: 54px;
+        width: 39px;
+        height: 39px;
         border: 2px solid darkolivegreen;
-        background-color: #E0F7FA;
+        background-color: transparent;
         text-align: center;
         line-height: 60px;
         font-family: Arial, sans-serif;
